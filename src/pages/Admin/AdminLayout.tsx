@@ -1,9 +1,25 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Bell, Clock, FileText, Users, DollarSign } from "lucide-react";
+import { Home, Bell, Clock, FileText, Users, DollarSign, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
+import { showSuccess, showError } from "@/utils/toast";
 
 const AdminLayout = () => {
+  const navigate = useNavigate();
+  const { isLoading } = useSession(); // Use useSession to check loading state
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      showError("Failed to sign out: " + error.message);
+    } else {
+      // showSuccess("Successfully signed out!"); // Handled by SessionContextProvider
+      navigate("/login");
+    }
+  };
+
   const adminNavItems = [
     { name: "Dashboard", path: "/admin", icon: Home },
     { name: "Announcements", path: "/admin/announcements", icon: Bell },
@@ -12,6 +28,10 @@ const AdminLayout = () => {
     { name: "Board Members", path: "/admin/board-members", icon: Users },
     { name: "Donation Causes", path: "/admin/donation-causes", icon: DollarSign },
   ];
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading admin panel...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
@@ -31,6 +51,10 @@ const AdminLayout = () => {
             ))}
             <Button variant="secondary" asChild>
               <Link to="/">Back to Public Site</Link>
+            </Button>
+            <Button variant="destructive" onClick={handleSignOut} className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </nav>
         </div>

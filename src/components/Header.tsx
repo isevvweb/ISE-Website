@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import { Info, Search } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Info, Search, LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,9 +11,24 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CreatorInfoDialog } from "@/components/CreatorInfoDialog";
+import { useSession } from "@/components/SessionContextProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { showError } from "@/utils/toast";
 
 const Header = () => {
   const [isCreatorInfoOpen, setIsCreatorInfoOpen] = React.useState(false);
+  const { session, isLoading } = useSession();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      showError("Failed to sign out: " + error.message);
+    } else {
+      // showSuccess("Successfully signed out!"); // Handled by SessionContextProvider
+      navigate("/login");
+    }
+  };
 
   const publicRoutes = [
     { name: "Home", path: "/" },
@@ -63,6 +78,21 @@ const Header = () => {
             <Info className="h-5 w-5" />
           </Button>
 
+          {/* Auth Button */}
+          {!isLoading && (
+            session ? (
+              <Button variant="ghost" size="icon" aria-label="Sign Out" onClick={handleSignOut}>
+                <LogOut className="h-5 w-5" />
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" aria-label="Sign In" asChild>
+                <Link to="/login">
+                  <LogIn className="h-5 w-5" />
+                </Link>
+              </Button>
+            )
+          )}
+
           {/* Mobile Navigation */}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
@@ -94,6 +124,19 @@ const Header = () => {
                     {route.name}
                   </Link>
                 ))}
+                {!isLoading && (
+                  session ? (
+                    <Button variant="ghost" className="justify-start text-lg font-medium hover:text-primary" onClick={handleSignOut}>
+                      <LogOut className="h-5 w-5 mr-2" /> Sign Out
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" className="justify-start text-lg font-medium hover:text-primary" asChild>
+                      <Link to="/login">
+                        <LogIn className="h-5 w-5 mr-2" /> Sign In
+                      </Link>
+                    </Button>
+                  )
+                )}
               </nav>
             </SheetContent>
           </Sheet>
