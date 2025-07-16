@@ -1,15 +1,49 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast"; // Using shadcn's toast for simple feedback
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { format, parseISO } from "date-fns";
+import { showError } from "@/utils/toast";
+
+interface Announcement {
+  id: string;
+  title: string;
+  description: string;
+  announcement_date: string; // ISO date string
+  image_url?: string;
+  is_active: boolean;
+}
 
 const Announcements = () => {
   const { toast } = useToast();
-  const [email, setEmail] = React.useState("");
-  const [phoneNumber, setPhoneNumber] = React.useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+
+  useEffect(() => {
+    fetchActiveAnnouncements();
+  }, []);
+
+  const fetchActiveAnnouncements = async () => {
+    setLoadingAnnouncements(true);
+    const { data, error } = await supabase
+      .from("announcements")
+      .select("*")
+      .eq("is_active", true) // Only fetch active announcements
+      .order("announcement_date", { ascending: false });
+
+    if (error) {
+      showError("Error fetching announcements: " + error.message);
+    } else {
+      setAnnouncements(data || []);
+    }
+    setLoadingAnnouncements(false);
+  };
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,30 +58,6 @@ const Announcements = () => {
     setPhoneNumber("");
   };
 
-  // Placeholder for announcements data
-  const dummyAnnouncements = [
-    {
-      id: "1",
-      title: "Eid al-Adha Prayer & Celebration",
-      description: "Join us for Eid al-Adha prayer at 8:00 AM followed by a community breakfast. Bring your families!",
-      date: "July 10, 2024",
-      imageUrl: "https://via.placeholder.com/600x300/4CAF50/FFFFFF?text=Eid+Celebration",
-    },
-    {
-      id: "2",
-      title: "Youth Summer Camp Registration Open",
-      description: "Register your children for our annual summer camp focusing on Islamic values and outdoor activities. Limited spots available!",
-      date: "June 25, 2024",
-      imageUrl: "https://via.placeholder.com/600x300/2196F3/FFFFFF?text=Youth+Camp",
-    },
-    {
-      id: "3",
-      title: "Weekly Quran Tafsir Class",
-      description: "Every Tuesday after Isha prayer, join Imam Omar for a deep dive into the meanings of the Quran. All are welcome.",
-      date: "June 15, 2024",
-    },
-  ];
-
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8 text-center">Announcements</h1>
@@ -55,31 +65,34 @@ const Announcements = () => {
       {/* Announcements Display Section */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6 text-center">Latest Updates</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {dummyAnnouncements.map((announcement) => (
-            <Card key={announcement.id}>
-              {announcement.imageUrl && (
-                <img
-                  src={announcement.imageUrl}
-                  alt={announcement.title}
-                  className="w-full h-48 object-cover rounded-t-lg mb-4"
-                />
-              )}
-              <CardHeader>
-                <CardTitle className="text-xl">{announcement.title}</CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  {announcement.date}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 dark:text-gray-300">{announcement.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
-          (Announcements will be managed and displayed from the admin panel.)
-        </p>
+        {loadingAnnouncements ? (
+          <p className="text-center">Loading announcements...</p>
+        ) : announcements.length === 0 ? (
+          <p className="text-center text-muted-foreground">No active announcements at this time.</p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {announcements.map((announcement) => (
+              <Card key={announcement.id}>
+                {announcement.image_url && (
+                  <img
+                    src={announcement.image_url}
+                    alt={announcement.title}
+                    className="w-full h-48 object-cover rounded-t-lg mb-4"
+                  />
+                )}
+                <CardHeader>
+                  <CardTitle className="text-xl">{announcement.title}</CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    {format(parseISO(announcement.announcement_date), "PPP")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 dark:text-gray-300">{announcement.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       <Separator className="my-12" />
@@ -121,7 +134,7 @@ const Announcements = () => {
               </Button>
             </form>
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-              Note: Subscription functionality requires backend integration (e.g., Supabase).
+              (Note: Subscription functionality requires backend integration for data storage and sending notifications.)
             </p>
           </CardContent>
         </Card>
