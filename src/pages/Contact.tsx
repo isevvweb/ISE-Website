@@ -45,7 +45,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLISHABLE_KEY, // Use the imported constant
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, // Corrected: Use Authorization header
         },
         body: JSON.stringify({ formType: "contact", data: contactForm }),
       });
@@ -73,7 +73,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLISHABLE_KEY, // Use the imported constant
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, // Corrected: Use Authorization header
         },
         body: JSON.stringify({ formType: "quranRequest", data: quranRequestForm }),
       });
