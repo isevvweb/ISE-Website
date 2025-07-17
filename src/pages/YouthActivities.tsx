@@ -82,9 +82,6 @@ const YouthActivities = () => {
                 title="Youth Events Calendar"
               ></iframe>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Note: This is a placeholder calendar. The actual youth events calendar will be linked here.
-            </p>
           </div>
           <div>
             <h3 className="text-xl font-semibold mb-4">Ongoing Programs</h3>
