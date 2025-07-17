@@ -81,25 +81,21 @@ const IqamahAdmin = () => {
 
     for (const prayerName of prayerOrder) {
       const timeData = iqamahTimes[prayerName];
-      if (!timeData || !timeData.iqamah_time) {
-        showError(`Iqamah time for ${prayerName} cannot be empty.`);
-        hasError = true;
-        continue;
-      }
+      const iqamahTimeValue = timeData?.iqamah_time || ""; // Ensure it's at least an empty string
 
-      // Validate 24-hour format for all time inputs
+      // Only validate format if the input is not empty
       const timeRegex = /^\d{2}:\d{2}$/;
-      if (!timeRegex.test(timeData.iqamah_time)) {
+      if (iqamahTimeValue !== "" && !timeRegex.test(iqamahTimeValue)) {
         showError(`Please enter ${prayerName} time in HH:MM (24-hour) format.`);
         hasError = true;
         continue;
       }
 
-      if (timeData.id) {
+      if (timeData?.id) {
         // Update existing
         const { error } = await supabase
           .from("iqamah_times")
-          .update({ iqamah_time: timeData.iqamah_time })
+          .update({ iqamah_time: iqamahTimeValue })
           .eq("id", timeData.id);
         if (error) {
           showError(`Error updating ${prayerName}: ${error.message}`);
@@ -109,7 +105,7 @@ const IqamahAdmin = () => {
         // Insert new (should only happen if initial data was missing)
         const { error } = await supabase
           .from("iqamah_times")
-          .insert({ prayer_name: prayerName, iqamah_time: timeData.iqamah_time });
+          .insert({ prayer_name: prayerName, iqamah_time: iqamahTimeValue });
         if (error) {
           showError(`Error inserting ${prayerName}: ${error.message}`);
           hasError = true;
@@ -147,7 +143,7 @@ const IqamahAdmin = () => {
                 <div className="col-span-2 flex items-center gap-2">
                   <Input
                     id={prayerName}
-                    type="time" // All prayer times now use type="time"
+                    type="time"
                     className="flex-grow"
                     value={iqamahTimes[prayerName]?.iqamah_time || ""}
                     onChange={(e) => handleChange(prayerName, e.target.value)}
