@@ -43,19 +43,19 @@ const YouthActivities = () => {
     {
       title: "Saturday School",
       bio: "Our Saturday School provides comprehensive Islamic education, including Quranic studies, Arabic language, and Islamic manners.",
-      images: ["https://via.placeholder.com/400x225/008000/FFFFFF?text=Saturday+School+1", "https://via.placeholder.com/400x225/008000/FFFFFF?text=Saturday+School+2"],
+      images: ["https://via.placeholder.com/400x225/008000/FFFFFF?text=Saturday+School"], // Changed to single image
       contactEmail: "saturdayschool@example.com",
     },
     {
       title: "Sunday School",
       bio: "Sunday School focuses on foundational Islamic knowledge, stories of the prophets, and character building for younger children.",
-      images: ["https://via.placeholder.com/400x225/800080/FFFFFF?text=Sunday+School+1", "https://via.placeholder.com/400x225/800080/FFFFFF?text=Sunday+School+2", "https://via.placeholder.com/400x225/800080/FFFFFF?text=Sunday+School+3"],
+      images: ["https://via.placeholder.com/400x225/800080/FFFFFF?text=Sunday+School"], // Changed to single image
       contactEmail: "sundayschool@example.com",
     },
     {
       title: "Little Pioneers Academy",
       bio: "A full-time Islamic preschool and kindergarten, offering a nurturing environment for early childhood development with an Islamic curriculum.",
-      images: ["https://via.placeholder.com/400x225/FFA500/FFFFFF?text=LPA+1"],
+      images: ["https://via.placeholder.com/400x225/FFA500/FFFFFF?text=LPA"], // Changed to single image
       contactPhone: "555-111-2222",
     },
   ];
