@@ -88,7 +88,7 @@ const Contact = () => {
             </div>
             <div className="relative w-full h-64 rounded-lg overflow-hidden shadow-md mt-6">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3099.9999999999995!2d-87.5685!3d37.9768!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8872211111111111%3A0x1111111111111111!2sIslamic+Society+of+Evansville!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d805154.9853288708!2d-88.585068053125!3d37.97393990000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x886e2ce863e0141d%3A0x3c6e231711beab09!2zSXNsYW1pYyBDZW50ZXIgb2YgRXZhbnN2aWxsZSDZhdiz2KzYrw!5e0!3m2!1sen!2sus!4v1752727462008!5m2!1sen!2sus"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
