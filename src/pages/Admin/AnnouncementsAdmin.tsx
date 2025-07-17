@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { v4 as uuidv4 } from 'uuid';
+import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
 
 interface Announcement {
   id: string;
@@ -114,6 +115,30 @@ const AnnouncementsAdmin = () => {
     return publicUrlData.publicUrl;
   };
 
+  const sendAnnouncementEmail = async (announcementData: Announcement) => {
+    try {
+      const response = await fetch("https://wzeyadxcbopevhuzimgf.supabase.co/functions/v1/send-announcement-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({ announcement: announcementData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error sending announcement email:", errorData.error || "Unknown error");
+        showError("Failed to send announcement emails: " + (errorData.error || "Unknown error"));
+      } else {
+        showSuccess("Announcement emails sent to subscribers!");
+      }
+    } catch (error: any) {
+      console.error("Network error sending announcement email:", error);
+      showError("Network error sending announcement emails: " + error.message);
+    }
+  };
+
   const handleSaveAnnouncement = async () => {
     if (!currentAnnouncement?.title || !currentAnnouncement?.announcement_date) {
       showError("Title and Announcement Date are required.");
@@ -130,9 +155,11 @@ const AnnouncementsAdmin = () => {
       imageUrlToSave = uploadedUrl;
     }
 
+    let savedAnnouncement: Announcement | null = null;
+
     if (currentAnnouncement.id) {
       // Update existing announcement
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("announcements")
         .update({
           title: currentAnnouncement.title,
@@ -141,32 +168,41 @@ const AnnouncementsAdmin = () => {
           image_url: imageUrlToSave,
           is_active: currentAnnouncement.is_active,
         })
-        .eq("id", currentAnnouncement.id);
+        .eq("id", currentAnnouncement.id)
+        .select() // Select the updated row to get full data
+        .single();
 
       if (error) {
         showError("Error updating announcement: " + error.message);
       } else {
         showSuccess("Announcement updated successfully!");
-        setIsDialogOpen(false);
-        fetchAnnouncements();
+        savedAnnouncement = data;
       }
     } else {
       // Add new announcement
-      const { error } = await supabase.from("announcements").insert({
+      const { data, error } = await supabase.from("announcements").insert({
         title: currentAnnouncement.title,
         description: currentAnnouncement.description,
         announcement_date: currentAnnouncement.announcement_date,
         image_url: imageUrlToSave,
         is_active: currentAnnouncement.is_active,
         // posted_at is handled by database default NOW()
-      });
+      }).select().single(); // Select the inserted row to get full data
 
       if (error) {
         showError("Error adding announcement: " + error.message);
       } else {
         showSuccess("Announcement added successfully!");
-        setIsDialogOpen(false);
-        fetchAnnouncements();
+        savedAnnouncement = data;
+      }
+    }
+
+    if (savedAnnouncement) {
+      setIsDialogOpen(false);
+      fetchAnnouncements();
+      // Send email notification if the announcement is active
+      if (savedAnnouncement.is_active) {
+        sendAnnouncementEmail(savedAnnouncement);
       }
     }
   };
