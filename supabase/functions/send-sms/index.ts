@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("--- Send SMS Function Start ---");
+  console.log("--- Send SMS Function Start (Vonage) ---");
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -27,50 +27,50 @@ serve(async (req) => {
     }
 
     // @ts-ignore
-    const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+    const vonageApiKey = Deno.env.get('VONAGE_API_KEY');
     // @ts-ignore
-    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    const vonageApiSecret = Deno.env.get('VONAGE_API_SECRET');
     // @ts-ignore
-    const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const vonagePhoneNumber = Deno.env.get('VONAGE_PHONE_NUMBER');
 
-    if (!accountSid || !authToken || !twilioPhoneNumber) {
-      console.error("Twilio environment variables not set.");
-      return new Response(JSON.stringify({ error: "Twilio credentials not configured." }), {
+    if (!vonageApiKey || !vonageApiSecret || !vonagePhoneNumber) {
+      console.error("Vonage environment variables not set.");
+      return new Response(JSON.stringify({ error: "Vonage credentials not configured." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    const twilioApiUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-    const authHeader = `Basic ${btoa(`${accountSid}:${authToken}`)}`;
+    const vonageApiUrl = 'https://rest.nexmo.com/sms/json';
 
     const body = new URLSearchParams();
-    body.append('To', to);
-    body.append('From', twilioPhoneNumber);
-    body.append('Body', message);
+    body.append('api_key', vonageApiKey);
+    body.append('api_secret', vonageApiSecret);
+    body.append('to', to);
+    body.append('from', vonagePhoneNumber);
+    body.append('text', message);
 
-    console.log("Sending SMS via Twilio API...");
-    const twilioResponse = await fetch(twilioApiUrl, {
+    console.log("Sending SMS via Vonage API...");
+    const vonageResponse = await fetch(vonageApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': authHeader,
       },
       body: body.toString(),
     });
 
-    const twilioData = await twilioResponse.json();
+    const vonageData = await vonageResponse.json();
 
-    if (!twilioResponse.ok) {
-      console.error("Twilio API error:", twilioData);
-      return new Response(JSON.stringify({ error: twilioData.message || "Failed to send SMS via Twilio." }), {
+    if (!vonageResponse.ok || vonageData.messages[0].status !== "0") {
+      console.error("Vonage API error:", vonageData);
+      return new Response(JSON.stringify({ error: vonageData.messages[0].error_text || "Failed to send SMS via Vonage." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: twilioResponse.status,
+        status: vonageResponse.status,
       });
     }
 
-    console.log("SMS sent successfully via Twilio:", twilioData);
-    return new Response(JSON.stringify({ message: "SMS sent successfully!", data: twilioData }), {
+    console.log("SMS sent successfully via Vonage:", vonageData);
+    return new Response(JSON.stringify({ message: "SMS sent successfully!", data: vonageData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
