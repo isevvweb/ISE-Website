@@ -168,15 +168,6 @@ const PrayerTimes = () => {
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
             Prayer times are calculated for Evansville, US using the ISNA method.
           </p>
-
-          <Separator className="my-12" />
-
-          <section className="mb-12 text-center">
-            <h2 className="text-2xl font-bold mb-6">Jumu'ah Prayer</h2>
-            <div className="max-w-md mx-auto p-6">
-              <p className="text-gray-700 dark:text-gray-300">Jumu'ah: 1:30 PM</p>
-            </div>
-          </section>
         </>
       )}
     </div>
