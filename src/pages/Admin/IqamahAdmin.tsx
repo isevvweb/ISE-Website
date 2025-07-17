@@ -6,17 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
-import { format, parse } from "date-fns"; // Import parse
+import { format, parse } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 
 interface IqamahTime {
   id: string;
   prayer_name: string;
-  iqamah_time: string; // Stored in 24-hour format (HH:mm)
+  iqamah_time: string; // Stored in 24-hour format (HH:mm) or "N/A"
 }
 
 // Helper function to format 24-hour time to 12-hour with AM/PM
 const formatTimeForDisplay = (time24h: string): string => {
-  if (!time24h) return "N/A";
+  if (!time24h || time24h === "N/A") return "N/A";
 
   // Check if it looks like a time string (HH:MM)
   const timeRegex = /^\d{2}:\d{2}$/;
@@ -69,8 +70,19 @@ const IqamahAdmin = () => {
       ...prev,
       [prayerName]: {
         ...prev[prayerName],
-        prayer_name: prayerName, // Ensure prayer_name is set even if new
+        prayer_name: prayerName,
         iqamah_time: value,
+      },
+    }));
+  };
+
+  const handleNACheckboxChange = (prayerName: string, checked: boolean) => {
+    setIqamahTimes((prev) => ({
+      ...prev,
+      [prayerName]: {
+        ...prev[prayerName],
+        prayer_name: prayerName,
+        iqamah_time: checked ? "N/A" : "", // Set to "N/A" or empty string
       },
     }));
   };
@@ -81,11 +93,11 @@ const IqamahAdmin = () => {
 
     for (const prayerName of prayerOrder) {
       const timeData = iqamahTimes[prayerName];
-      const iqamahTimeValue = timeData?.iqamah_time || ""; // Ensure it's at least an empty string
+      const iqamahTimeValue = timeData?.iqamah_time || "";
 
-      // Only validate format if the input is not empty
+      // Only validate format if the input is not empty AND not "N/A"
       const timeRegex = /^\d{2}:\d{2}$/;
-      if (iqamahTimeValue !== "" && !timeRegex.test(iqamahTimeValue)) {
+      if (iqamahTimeValue !== "" && iqamahTimeValue !== "N/A" && !timeRegex.test(iqamahTimeValue)) {
         showError(`Please enter ${prayerName} time in HH:MM (24-hour) format.`);
         hasError = true;
         continue;
@@ -145,10 +157,21 @@ const IqamahAdmin = () => {
                     id={prayerName}
                     type="time"
                     className="flex-grow"
-                    value={iqamahTimes[prayerName]?.iqamah_time || ""}
+                    value={iqamahTimes[prayerName]?.iqamah_time === "N/A" ? "" : iqamahTimes[prayerName]?.iqamah_time || ""}
                     onChange={(e) => handleChange(prayerName, e.target.value)}
+                    disabled={iqamahTimes[prayerName]?.iqamah_time === "N/A"}
                     placeholder="HH:MM (24-hour)"
                   />
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${prayerName}-na`}
+                      checked={iqamahTimes[prayerName]?.iqamah_time === "N/A"}
+                      onCheckedChange={(checked) => handleNACheckboxChange(prayerName, !!checked)}
+                    />
+                    <Label htmlFor={`${prayerName}-na`} className="text-sm font-normal">
+                      N/A
+                    </Label>
+                  </div>
                   <span className="text-sm text-muted-foreground min-w-[80px] text-right">
                     {formatTimeForDisplay(iqamahTimes[prayerName]?.iqamah_time || "")}
                   </span>
