@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Info, Search, Menu } from "lucide-react"; // Added Menu icon
+import { Info, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -30,8 +30,8 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="mr-4 flex items-center">
-          <span className="font-bold text-lg">Islamic Society of Evansville</span>
+        <Link to="/" className="mr-4 flex items-center flex-shrink-0"> {/* Added flex-shrink-0 */}
+          <span className="font-bold text-lg whitespace-nowrap">Islamic Society of Evansville</span> {/* Added whitespace-nowrap */}
         </Link>
 
         {/* Desktop Navigation */}
@@ -72,7 +72,7 @@ const Header = () => {
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" aria-label="Toggle navigation">
-                <Menu className="h-6 w-6" /> {/* Replaced SVG with Lucide Menu icon */}
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
