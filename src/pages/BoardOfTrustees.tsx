@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import TrusteeCard from "@/components/TrusteeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query"; // Import useQuery
 
 interface Trustee {
   id: string;
@@ -16,34 +17,40 @@ interface Trustee {
   display_order: number;
 }
 
+const fetchTrustees = async (): Promise<Trustee[]> => {
+  const { data, error } = await supabase
+    .from("board_of_trustees")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    throw new Error("Error fetching board of trustees: " + error.message);
+  }
+  return data || [];
+};
+
 const BoardOfTrustees = () => {
-  const [trustees, setTrustees] = useState<Trustee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: trustees, isLoading, error } = useQuery<Trustee[], Error>({
+    queryKey: ["trustees"],
+    queryFn: fetchTrustees,
+    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    refetchOnWindowFocus: false, // Prevent refetching on window focus for static content
+  });
 
-  useEffect(() => {
-    fetchTrustees();
-  }, []);
-
-  const fetchTrustees = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("board_of_trustees")
-      .select("*")
-      .order("display_order", { ascending: true });
-
-    if (error) {
-      showError("Error fetching board of trustees: " + error.message);
-    } else {
-      setTrustees(data || []);
-    }
-    setLoading(false);
-  };
+  if (error) {
+    showError("Error loading board of trustees: " + error.message);
+    return (
+      <div className="container mx-auto p-4 text-center text-red-500">
+        <p>Error loading board of trustees. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-8 text-center">Meet Our Board of Trustees</h1>
 
-      {loading ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(5)].map((_, i) => (
             <Card key={i} className="flex flex-col items-center text-center p-6 h-full">
