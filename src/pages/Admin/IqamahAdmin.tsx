@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
 import { format, parse } from "date-fns";
-import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
+import { Checkbox } from "@/components/ui/checkbox";
+import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 
 interface IqamahTime {
   id: string;
@@ -42,6 +43,7 @@ const IqamahAdmin = () => {
   const [iqamahTimes, setIqamahTimes] = useState<Record<string, IqamahTime>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient(); // Initialize useQueryClient
 
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
@@ -127,6 +129,7 @@ const IqamahAdmin = () => {
 
     if (!hasError) {
       showSuccess("Iqamah times updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["prayerTimesAndIqamah"] }); // Invalidate the query
       fetchIqamahTimes(); // Re-fetch to ensure state is consistent with DB
     }
     setSaving(false);
