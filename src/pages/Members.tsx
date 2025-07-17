@@ -53,14 +53,14 @@ const Members = () => {
             </p>
             <div className="relative w-full mx-auto" style={{ paddingBottom: "75%", maxWidth: "600px" }}>
               <iframe
-                src="https://calendar.google.com/calendar/embed?src=en.usa%23holiday%40group.v.calendar.google.com&ctz=America%2FNew_York"
+                src="https://calendar.google.com/calendar/embed?src=464ad63344b9b7c026adb7ee76c370b95864259cac908d685142e8571291449c%40group.calendar.google.com&ctz=America%2FChicago"
                 style={{ border: 0 }}
                 width="100%"
                 height="100%"
                 frameBorder="0"
                 scrolling="no"
                 className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
-                title="Community Events Calendar Placeholder"
+                title="Community Events Calendar"
               ></iframe>
             </div>
           </CardContent>
