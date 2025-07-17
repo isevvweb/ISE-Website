@@ -7,6 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast"; // Using custom toast utilities
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Contact = () => {
   const [contactForm, setContactForm] = React.useState({
@@ -22,6 +29,7 @@ const Contact = () => {
     city: "",
     state: "",
     zip: "",
+    language: "English", // New state for language, default to English
   });
   const [isContactLoading, setIsContactLoading] = React.useState(false);
   const [isQuranRequestLoading, setIsQuranRequestLoading] = React.useState(false);
@@ -36,6 +44,10 @@ const Contact = () => {
     setQuranRequestForm((prev) => ({ ...prev, [id]: value }));
   };
 
+  const handleQuranLanguageChange = (value: string) => {
+    setQuranRequestForm((prev) => ({ ...prev, language: value }));
+  };
+
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsContactLoading(true);
@@ -45,7 +57,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, // Corrected: Use Authorization header
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ formType: "contact", data: contactForm }),
       });
@@ -73,7 +85,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, // Corrected: Use Authorization header
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ formType: "quranRequest", data: quranRequestForm }),
       });
@@ -84,7 +96,7 @@ const Contact = () => {
       }
 
       showSuccess("Quran Request Received! Thank you for your interest. We will process your request shortly.");
-      setQuranRequestForm({ name: "", email: "", address: "", city: "", state: "", zip: "" });
+      setQuranRequestForm({ name: "", email: "", address: "", city: "", state: "", zip: "", language: "English" });
     } catch (error: any) {
       showError("Error sending Quran request: " + error.message);
     } finally {
@@ -216,6 +228,19 @@ const Contact = () => {
                   <Label htmlFor="quran-zip">Zip Code</Label>
                   <Input id="quran-zip" type="text" placeholder="47710" value={quranRequestForm.zip} onChange={(e) => setQuranRequestForm({...quranRequestForm, zip: e.target.value})} required />
                 </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="quran-language">Preferred Language</Label>
+                <Select value={quranRequestForm.language} onValueChange={handleQuranLanguageChange}>
+                  <SelectTrigger id="quran-language">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Arabic">Arabic</SelectItem>
+                    <SelectItem value="Spanish">Spanish</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full" disabled={isQuranRequestLoading}>
                 {isQuranRequestLoading ? (

@@ -47,6 +47,7 @@ serve(async (req) => {
         Name: ${data.name}
         Email: ${data.email}
         Address: ${data.address}, ${data.city}, ${data.state} ${data.zip}
+        Preferred Language: ${data.language || 'Not specified'}
       `;
       replyToEmail = data.email; // Set reply-to to the sender's email
     } else {
