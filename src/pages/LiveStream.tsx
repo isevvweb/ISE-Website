@@ -13,9 +13,6 @@ const LiveStream = () => {
           className="absolute top-0 left-0 w-full h-full border-0 rounded-lg shadow-lg"
         ></iframe>
       </div>
-      <p className="text-center mt-4 text-gray-600 dark:text-gray-400">
-        Note: We are exploring alternative live stream solutions for future improvements.
-      </p>
     </div>
   );
 };
