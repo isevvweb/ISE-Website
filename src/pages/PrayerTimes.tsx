@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, parse } from "date-fns"; // Import parse
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -85,6 +85,29 @@ interface IqamahTime {
   prayer_name: string;
   iqamah_time: string;
 }
+
+// Helper function to format 24-hour time to 12-hour with AM/PM
+const formatTimeForDisplay = (time24h: string): string => {
+  if (!time24h) return "N/A";
+
+  // Check if it looks like a time string (HH:MM)
+  const timeRegex = /^\d{2}:\d{2}$/;
+  if (timeRegex.test(time24h)) {
+    try {
+      // Parse the time string. We need a reference date, but only the time part matters.
+      const parsedTime = parse(time24h, 'HH:mm', new Date());
+      // Check if parsing was successful and it's a valid date
+      if (!isNaN(parsedTime.getTime())) {
+        return format(parsedTime, 'hh:mm a'); // Format to 12-hour with AM/PM
+      }
+    } catch (e) {
+      // Fallback if parsing fails
+      console.warn("Failed to parse time:", time24h, e);
+    }
+  }
+  // If not a valid time string or parsing failed, return original
+  return time24h;
+};
 
 const fetchPrayerTimesAndIqamah = async (): Promise<{
   apiTimes: PrayerTimesData;
@@ -182,7 +205,7 @@ const PrayerTimes = () => {
                       <TableCell className="font-medium">{prayer}</TableCell>
                       <TableCell>{data.apiTimes.data.timings[prayer as keyof typeof data.apiTimes.data.timings]}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {data.iqamahTimes[prayer] || "N/A"}
+                        {formatTimeForDisplay(data.iqamahTimes[prayer] || "N/A")}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -191,7 +214,7 @@ const PrayerTimes = () => {
             </CardContent>
           </Card>
           <p className="text-center text-xl font-medium mt-8 text-gray-700 dark:text-gray-300">
-            Jumu'ah: {data.iqamahTimes["Jumuah"] || "N/A"}
+            Jumu'ah: {formatTimeForDisplay(data.iqamahTimes["Jumuah"] || "N/A")}
           </p>
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
             Prayer times are calculated for Evansville, US using the ISNA method.

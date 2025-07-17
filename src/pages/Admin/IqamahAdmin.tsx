@@ -6,12 +6,36 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { showSuccess, showError } from "@/utils/toast";
 import { Loader2 } from "lucide-react";
+import { format, parse } from "date-fns"; // Import parse
 
 interface IqamahTime {
   id: string;
   prayer_name: string;
-  iqamah_time: string;
+  iqamah_time: string; // Stored in 24-hour format (HH:mm)
 }
+
+// Helper function to format 24-hour time to 12-hour with AM/PM
+const formatTimeForDisplay = (time24h: string): string => {
+  if (!time24h) return "N/A";
+
+  // Check if it looks like a time string (HH:MM)
+  const timeRegex = /^\d{2}:\d{2}$/;
+  if (timeRegex.test(time24h)) {
+    try {
+      // Parse the time string. We need a reference date, but only the time part matters.
+      const parsedTime = parse(time24h, 'HH:mm', new Date());
+      // Check if parsing was successful and it's a valid date
+      if (!isNaN(parsedTime.getTime())) {
+        return format(parsedTime, 'hh:mm a'); // Format to 12-hour with AM/PM
+      }
+    } catch (e) {
+      // Fallback if parsing fails
+      console.warn("Failed to parse time:", time24h, e);
+    }
+  }
+  // If not a valid time string or parsing failed, return original
+  return time24h;
+};
 
 const IqamahAdmin = () => {
   const [iqamahTimes, setIqamahTimes] = useState<Record<string, IqamahTime>>({});
@@ -59,6 +83,14 @@ const IqamahAdmin = () => {
       const timeData = iqamahTimes[prayerName];
       if (!timeData || !timeData.iqamah_time) {
         showError(`Iqamah time for ${prayerName} cannot be empty.`);
+        hasError = true;
+        continue;
+      }
+
+      // Validate 24-hour format for time inputs, but allow free text for Jumuah/Maghrib if needed
+      const timeRegex = /^\d{2}:\d{2}$/;
+      if (prayerName !== "Jumuah" && prayerName !== "Maghrib" && !timeRegex.test(timeData.iqamah_time)) {
+        showError(`Please enter ${prayerName} time in HH:MM (24-hour) format.`);
         hasError = true;
         continue;
       }
@@ -112,14 +144,19 @@ const IqamahAdmin = () => {
                 <Label htmlFor={prayerName} className="col-span-1 text-right font-medium">
                   {prayerName}
                 </Label>
-                <Input
-                  id={prayerName}
-                  type="text"
-                  className="col-span-2"
-                  value={iqamahTimes[prayerName]?.iqamah_time || ""}
-                  onChange={(e) => handleChange(prayerName, e.target.value)}
-                  placeholder="e.g., 01:30 PM or Sunset + 10 min"
-                />
+                <div className="col-span-2 flex items-center gap-2">
+                  <Input
+                    id={prayerName}
+                    type={prayerName === "Jumuah" || prayerName === "Maghrib" ? "text" : "time"} // Use type="time" for standard prayers
+                    className="flex-grow"
+                    value={iqamahTimes[prayerName]?.iqamah_time || ""}
+                    onChange={(e) => handleChange(prayerName, e.target.value)}
+                    placeholder={prayerName === "Jumuah" || prayerName === "Maghrib" ? "e.g., 01:30 PM or Sunset + 10 min" : "HH:MM (24-hour)"}
+                  />
+                  <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                    {formatTimeForDisplay(iqamahTimes[prayerName]?.iqamah_time || "")}
+                  </span>
+                </div>
               </div>
             ))}
             <Button onClick={handleSave} className="w-full mt-6" disabled={saving}>
