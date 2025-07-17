@@ -70,15 +70,17 @@ const Announcements = () => {
         ) : announcements.length === 0 ? (
           <p className="text-center text-muted-foreground">No active announcements at this time.</p>
         ) : (
-          <div className="flex flex-col gap-6"> {/* Changed to flex-col for column layout */}
+          <div className="flex flex-col gap-6">
             {announcements.map((announcement) => (
               <Card key={announcement.id}>
                 {announcement.image_url && (
-                  <img
-                    src={announcement.image_url}
-                    alt={announcement.title}
-                    className="w-full h-48 object-cover rounded-t-lg mb-4"
-                  />
+                  <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
+                    <img
+                      src={announcement.image_url}
+                      alt={announcement.title}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 )}
                 <CardHeader>
                   <CardTitle className="text-xl">{announcement.title}</CardTitle>
