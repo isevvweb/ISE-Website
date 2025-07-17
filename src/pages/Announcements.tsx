@@ -70,7 +70,7 @@ const Announcements = () => {
         ) : announcements.length === 0 ? (
           <p className="text-center text-muted-foreground">No active announcements at this time.</p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-6"> {/* Changed to flex-col for column layout */}
             {announcements.map((announcement) => (
               <Card key={announcement.id}>
                 {announcement.image_url && (
@@ -133,9 +133,6 @@ const Announcements = () => {
                 Subscribe
               </Button>
             </form>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-              (Note: Subscription functionality requires backend integration for data storage and sending notifications.)
-            </p>
           </CardContent>
         </Card>
       </section>

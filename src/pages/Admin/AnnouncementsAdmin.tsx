@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { showSuccess, showError } from "@/utils/toast";
 import { format, parseISO } from "date-fns";
-import { CalendarIcon, Edit, Trash2, PlusCircle } from "lucide-react";
+import { CalendarIcon, Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { v4 as uuidv4 } from 'uuid';
 
 interface Announcement {
   id: string;
@@ -30,6 +31,9 @@ const AnnouncementsAdmin = () => {
   const [currentAnnouncement, setCurrentAnnouncement] = useState<Partial<Announcement> | null>(null);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -58,11 +62,13 @@ const AnnouncementsAdmin = () => {
       image_url: "",
       is_active: true,
     });
+    setSelectedFile(null);
     setIsDialogOpen(true);
   };
 
   const handleEditClick = (announcement: Announcement) => {
     setCurrentAnnouncement({ ...announcement });
+    setSelectedFile(null); // Clear selected file when editing
     setIsDialogOpen(true);
   };
 
@@ -71,10 +77,56 @@ const AnnouncementsAdmin = () => {
     setIsConfirmDeleteOpen(true);
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setSelectedFile(event.target.files[0]);
+    } else {
+      setSelectedFile(null);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!selectedFile) return currentAnnouncement?.image_url || null;
+
+    setUploadingImage(true);
+    const fileExtension = selectedFile.name.split('.').pop();
+    const filePath = `announcements/${uuidv4()}.${fileExtension}`;
+
+    const { data, error } = await supabase.storage
+      .from('announcement-images')
+      .upload(filePath, selectedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    setUploadingImage(false);
+
+    if (error) {
+      showError("Error uploading image: " + error.message);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('announcement-images')
+      .getPublicUrl(filePath);
+
+    return publicUrlData.publicUrl;
+  };
+
   const handleSaveAnnouncement = async () => {
     if (!currentAnnouncement?.title || !currentAnnouncement?.announcement_date) {
       showError("Title and Announcement Date are required.");
       return;
+    }
+
+    let imageUrlToSave = currentAnnouncement.image_url;
+    if (selectedFile) {
+      const uploadedUrl = await uploadImage();
+      if (uploadedUrl === null) {
+        // If upload failed, stop the save process
+        return;
+      }
+      imageUrlToSave = uploadedUrl;
     }
 
     if (currentAnnouncement.id) {
@@ -84,8 +136,8 @@ const AnnouncementsAdmin = () => {
         .update({
           title: currentAnnouncement.title,
           description: currentAnnouncement.description,
-          announcement_date: currentAnnouncement.announcement_date,
-          image_url: currentAnnouncement.image_url,
+          announcement_date: imageUrlToSave ? imageUrlToSave : currentAnnouncement.announcement_date, // Use uploaded URL or existing
+          image_url: imageUrlToSave,
           is_active: currentAnnouncement.is_active,
         })
         .eq("id", currentAnnouncement.id);
@@ -103,7 +155,7 @@ const AnnouncementsAdmin = () => {
         title: currentAnnouncement.title,
         description: currentAnnouncement.description,
         announcement_date: currentAnnouncement.announcement_date,
-        image_url: currentAnnouncement.image_url,
+        image_url: imageUrlToSave,
         is_active: currentAnnouncement.is_active,
       });
 
@@ -119,6 +171,17 @@ const AnnouncementsAdmin = () => {
 
   const confirmDelete = async () => {
     if (announcementToDelete) {
+      const { data: announcementData, error: fetchError } = await supabase
+        .from("announcements")
+        .select("image_url")
+        .eq("id", announcementToDelete)
+        .single();
+
+      if (fetchError) {
+        showError("Error fetching announcement for image deletion: " + fetchError.message);
+        return;
+      }
+
       const { error } = await supabase
         .from("announcements")
         .delete()
@@ -128,6 +191,18 @@ const AnnouncementsAdmin = () => {
         showError("Error deleting announcement: " + error.message);
       } else {
         showSuccess("Announcement deleted successfully!");
+        // Optionally delete image from storage if it exists
+        if (announcementData?.image_url) {
+          const imagePath = announcementData.image_url.split('announcement-images/')[1];
+          if (imagePath) {
+            const { error: storageError } = await supabase.storage
+              .from('announcement-images')
+              .remove([imagePath]);
+            if (storageError) {
+              console.error("Error deleting image from storage:", storageError.message);
+            }
+          }
+        }
         fetchAnnouncements();
       }
       setIsConfirmDeleteOpen(false);
@@ -249,15 +324,33 @@ const AnnouncementsAdmin = () => {
               </Popover>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="image_url" className="text-right">
-                Image URL
+              <Label htmlFor="image_upload" className="text-right">
+                Image
               </Label>
-              <Input
-                id="image_url"
-                value={currentAnnouncement?.image_url || ""}
-                onChange={(e) => setCurrentAnnouncement({ ...currentAnnouncement, image_url: e.target.value })}
-                className="col-span-3"
-              />
+              <div className="col-span-3 flex flex-col gap-2">
+                <Input
+                  id="image_upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                />
+                {(selectedFile || currentAnnouncement?.image_url) && (
+                  <div className="mt-2">
+                    <p className="text-sm text-muted-foreground mb-1">Current/Selected Image:</p>
+                    <img
+                      src={selectedFile ? URL.createObjectURL(selectedFile) : currentAnnouncement?.image_url}
+                      alt="Announcement Image Preview"
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                  </div>
+                )}
+                {uploadingImage && (
+                  <div className="flex items-center text-sm text-muted-foreground mt-2">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading image...
+                  </div>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="is_active" className="text-right">
@@ -273,7 +366,15 @@ const AnnouncementsAdmin = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveAnnouncement}>Save Announcement</Button>
+            <Button onClick={handleSaveAnnouncement} disabled={uploadingImage}>
+              {uploadingImage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                "Save Announcement"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
