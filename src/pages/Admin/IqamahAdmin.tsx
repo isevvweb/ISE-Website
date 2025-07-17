@@ -87,9 +87,9 @@ const IqamahAdmin = () => {
         continue;
       }
 
-      // Validate 24-hour format for time inputs, but allow free text for Jumuah/Maghrib if needed
+      // Validate 24-hour format for time inputs, but allow free text for Jumuah if needed
       const timeRegex = /^\d{2}:\d{2}$/;
-      if (prayerName !== "Jumuah" && prayerName !== "Maghrib" && !timeRegex.test(timeData.iqamah_time)) {
+      if (prayerName !== "Jumuah" && !timeRegex.test(timeData.iqamah_time)) { // Maghrib now included in time validation
         showError(`Please enter ${prayerName} time in HH:MM (24-hour) format.`);
         hasError = true;
         continue;
@@ -147,11 +147,11 @@ const IqamahAdmin = () => {
                 <div className="col-span-2 flex items-center gap-2">
                   <Input
                     id={prayerName}
-                    type={prayerName === "Jumuah" || prayerName === "Maghrib" ? "text" : "time"} // Use type="time" for standard prayers
+                    type={prayerName === "Jumuah" ? "text" : "time"} // Maghrib now uses type="time"
                     className="flex-grow"
                     value={iqamahTimes[prayerName]?.iqamah_time || ""}
                     onChange={(e) => handleChange(prayerName, e.target.value)}
-                    placeholder={prayerName === "Jumuah" || prayerName === "Maghrib" ? "e.g., 01:30 PM or Sunset + 10 min" : "HH:MM (24-hour)"}
+                    placeholder={prayerName === "Jumuah" ? "e.g., 01:30 PM" : "HH:MM (24-hour)"}
                   />
                   <span className="text-sm text-muted-foreground min-w-[80px] text-right">
                     {formatTimeForDisplay(iqamahTimes[prayerName]?.iqamah_time || "")}
