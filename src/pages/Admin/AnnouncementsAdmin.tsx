@@ -22,6 +22,7 @@ interface Announcement {
   announcement_date: string; // ISO date string
   image_url?: string;
   is_active: boolean;
+  posted_at?: string; // New column for precise sorting
 }
 
 const AnnouncementsAdmin = () => {
@@ -44,7 +45,7 @@ const AnnouncementsAdmin = () => {
     const { data, error } = await supabase
       .from("announcements")
       .select("*")
-      .order("announcement_date", { ascending: false });
+      .order("posted_at", { ascending: false }); // Sort by posted_at for newest first
 
     if (error) {
       showError("Error fetching announcements: " + error.message);
@@ -157,6 +158,7 @@ const AnnouncementsAdmin = () => {
         announcement_date: currentAnnouncement.announcement_date,
         image_url: imageUrlToSave,
         is_active: currentAnnouncement.is_active,
+        // posted_at is handled by database default NOW()
       });
 
       if (error) {

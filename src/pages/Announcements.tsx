@@ -16,6 +16,7 @@ interface Announcement {
   announcement_date: string; // ISO date string
   image_url?: string;
   is_active: boolean;
+  posted_at?: string; // New column for precise sorting
 }
 
 const Announcements = () => {
@@ -35,7 +36,7 @@ const Announcements = () => {
       .from("announcements")
       .select("*")
       .eq("is_active", true) // Only fetch active announcements
-      .order("announcement_date", { ascending: false });
+      .order("posted_at", { ascending: false }); // Sort by posted_at for newest first
 
     if (error) {
       showError("Error fetching announcements: " + error.message);
