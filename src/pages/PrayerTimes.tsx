@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 interface PrayerTimesData {
   code: number;
@@ -167,6 +168,21 @@ const PrayerTimes = () => {
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
             Prayer times are calculated for Evansville, US using the ISNA method.
           </p>
+
+          <Separator className="my-12" />
+
+          <section className="mb-12 text-center">
+            <h2 className="text-2xl font-bold mb-6">Jumu'ah Prayer</h2>
+            <Card className="max-w-md mx-auto p-6">
+              <CardContent className="text-gray-700 dark:text-gray-300">
+                <p className="text-xl font-semibold mb-4">First Jumu'ah: 1:30 PM</p>
+                <p className="text-xl font-semibold mb-4">Second Jumu'ah: 2:30 PM</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                  (Jumu'ah times are subject to change and will be updated via the admin panel.)
+                </p>
+              </CardContent>
+            </Card>
+          </section>
         </>
       )}
     </div>
