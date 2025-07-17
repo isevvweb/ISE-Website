@@ -1,27 +1,18 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom"; // Removed useNavigate
+import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Bell, Clock, FileText, Users, DollarSign } from "lucide-react"; // Removed LogOut
-// Removed supabase import
-// Removed useSession import
-// Removed showError import
+import { Home, Bell, Clock, FileText, Users, DollarSign, Gavel } from "lucide-react"; // Added Gavel icon
 
 const AdminLayout = () => {
-  // Removed navigate
-  // Removed isLoading from useSession
-
-  // Removed handleSignOut function
-
   const adminNavItems = [
     { name: "Dashboard", path: "/admin", icon: Home },
     { name: "Announcements", path: "/admin/announcements", icon: Bell },
     { name: "Iqamah Times", path: "/admin/iqamah", icon: Clock },
     { name: "Annual Reports", path: "/admin/reports", icon: FileText },
     { name: "Board Members", path: "/admin/board-members", icon: Users },
+    { name: "Board of Trustees", path: "/admin/trustees", icon: Gavel }, // New nav item
     { name: "Donation Causes", path: "/admin/donation-causes", icon: DollarSign },
   ];
-
-  // Removed isLoading check
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
@@ -42,12 +33,11 @@ const AdminLayout = () => {
             <Button variant="secondary" asChild>
               <Link to="/">Back to Public Site</Link>
             </Button>
-            {/* Sign Out button removed */}
           </nav>
         </div>
       </header>
       <main className="flex-grow container mx-auto p-4">
-        <Outlet /> {/* This is where the admin sub-pages will render */}
+        <Outlet />
       </main>
     </div>
   );
