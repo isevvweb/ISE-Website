@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MapPin } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import { showSuccess, showError } from "@/utils/toast"; // Using custom toast utilities
 
 const Contact = () => {
-  const { toast } = useToast();
   const [contactForm, setContactForm] = React.useState({
     name: "",
     email: "",
@@ -23,6 +22,8 @@ const Contact = () => {
     state: "",
     zip: "",
   });
+  const [isContactLoading, setIsContactLoading] = React.useState(false);
+  const [isQuranRequestLoading, setIsQuranRequestLoading] = React.useState(false);
 
   const handleContactFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -34,24 +35,58 @@ const Contact = () => {
     setQuranRequestForm((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Contact Form Submission:", contactForm);
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for reaching out. We will get back to you soon.",
-    });
-    setContactForm({ name: "", email: "", subject: "", message: "" });
+    setIsContactLoading(true);
+
+    try {
+      const response = await fetch("https://wzeyadxcbopevhuzimgf.supabase.co/functions/v1/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ formType: "contact", data: contactForm }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send message.");
+      }
+
+      showSuccess("Message Sent! Thank you for reaching out. We will get back to you soon.");
+      setContactForm({ name: "", email: "", subject: "", message: "" });
+    } catch (error: any) {
+      showError("Error sending message: " + error.message);
+    } finally {
+      setIsContactLoading(false);
+    }
   };
 
-  const handleQuranRequestSubmit = (e: React.FormEvent) => {
+  const handleQuranRequestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Quran Request Submission:", quranRequestForm);
-    toast({
-      title: "Quran Request Received!",
-      description: "Thank you for your interest. We will process your request shortly.",
-    });
-    setQuranRequestForm({ name: "", email: "", address: "", city: "", state: "", zip: "" });
+    setIsQuranRequestLoading(true);
+
+    try {
+      const response = await fetch("https://wzeyadxcbopevhuzimgf.supabase.co/functions/v1/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ formType: "quranRequest", data: quranRequestForm }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send Quran request.");
+      }
+
+      showSuccess("Quran Request Received! Thank you for your interest. We will process your request shortly.");
+      setQuranRequestForm({ name: "", email: "", address: "", city: "", state: "", zip: "" });
+    } catch (error: any) {
+      showError("Error sending Quran request: " + error.message);
+    } finally {
+      setIsQuranRequestLoading(false);
+    }
   };
 
   return (
@@ -127,7 +162,15 @@ const Contact = () => {
                 <Label htmlFor="message">Message</Label>
                 <Textarea id="message" placeholder="Your message here..." value={contactForm.message} onChange={handleContactFormChange} rows={5} required />
               </div>
-              <Button type="submit" className="w-full">Send Message</Button>
+              <Button type="submit" className="w-full" disabled={isContactLoading}>
+                {isContactLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
             </form>
           </CardContent>
         </Card>
@@ -171,7 +214,15 @@ const Contact = () => {
                   <Input id="quran-zip" type="text" placeholder="47710" value={quranRequestForm.zip} onChange={(e) => setQuranRequestForm({...quranRequestForm, zip: e.target.value})} required />
                 </div>
               </div>
-              <Button type="submit" className="w-full">Request Quran</Button>
+              <Button type="submit" className="w-full" disabled={isQuranRequestLoading}>
+                {isQuranRequestLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
+                  </>
+                ) : (
+                  "Request Quran"
+                )}
+              </Button>
             </form>
           </CardContent>
         </Card>
