@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("Edge function received request."); // Log at the very beginning
+  console.log("Edge function received request.");
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -17,15 +17,16 @@ serve(async (req) => {
 
   try {
     const { formType, data } = await req.json();
-    console.log("Request body parsed:", { formType, data }); // Log after parsing body
+    console.log("Request body parsed:", { formType, data });
 
     // @ts-ignore
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    console.log("Resend client initialized."); // Log after Resend init
+    console.log("Resend client initialized.");
 
     let emailSubject = "";
     let emailBody = "";
-    let toEmail = "isewebapi@gmail.com"; // Updated recipient email
+    let toEmail = "isewebapi@gmail.com"; // Your recipient email
+    let replyToEmail = ""; // This will be the user's email
 
     if (formType === "contact") {
       emailSubject = `New Contact Form Submission: ${data.subject}`;
@@ -35,6 +36,7 @@ serve(async (req) => {
         Subject: ${data.subject}
         Message: ${data.message}
       `;
+      replyToEmail = data.email; // Set reply-to to the sender's email
     } else if (formType === "quranRequest") {
       emailSubject = "New Quran Request";
       emailBody = `
@@ -42,39 +44,41 @@ serve(async (req) => {
         Email: ${data.email}
         Address: ${data.address}, ${data.city}, ${data.state} ${data.zip}
       `;
+      replyToEmail = data.email; // Set reply-to to the sender's email
     } else {
-      console.warn("Invalid form type received:", formType); // Log invalid type
+      console.warn("Invalid form type received:", formType);
       return new Response(JSON.stringify({ error: "Invalid form type" }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
     }
 
-    console.log("Attempting to send email with subject:", emailSubject); // Log before sending
+    console.log("Attempting to send email with subject:", emailSubject);
 
     const { data: resendData, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev', // IMPORTANT: This needs to be a verified domain in your Resend account.
+      from: 'onboarding@resend.dev', // Use Resend's verified sandbox domain
       to: toEmail,
       subject: emailSubject,
       html: `<pre>${emailBody}</pre>`,
+      reply_to: replyToEmail, // Set the reply-to address
     });
 
     if (error) {
-      console.error("Resend error:", error); // Log Resend specific errors
+      console.error("Resend error:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    console.log("Email sent successfully:", resendData); // Log success
+    console.log("Email sent successfully:", resendData);
     return new Response(JSON.stringify({ message: "Email sent successfully!", data: resendData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    console.error("Function error (caught):", error); // Log any caught errors
+    console.error("Function error (caught):", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
