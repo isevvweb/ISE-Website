@@ -40,6 +40,11 @@ const BoardMembersAdmin = () => {
     fetchBoardMembers();
   }, []);
 
+  // New useEffect to log state changes
+  useEffect(() => {
+    console.log("BoardMembers state updated (in component):", boardMembers);
+  }, [boardMembers]);
+
   const fetchBoardMembers = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -52,7 +57,7 @@ const BoardMembersAdmin = () => {
       showError("Error fetching board members: " + error.message);
       setBoardMembers([]);
     } else {
-      console.log("Fetched board members data (in admin):", data); // Added log
+      console.log("Fetched board members data (from Supabase):", data); // Clarified log
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -155,7 +160,7 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member updated successfully!");
-        console.log("Updated member in DB:", currentMember); // Added log
+        console.log("Updated member in DB:", currentMember);
       } else {
         // Add new member
         const { error } = await supabase.from("board_members").insert({
@@ -170,23 +175,23 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member added successfully!");
-        console.log("Added new member to DB:", currentMember); // Added log
+        console.log("Added new member to DB:", currentMember);
       }
-      setIsDialogOpen(false); // Close dialog only on success
+      setIsDialogOpen(false);
     } catch (error: any) {
       console.error("Error saving board member:", error);
       showError("Error saving board member: " + error.message);
     } finally {
       setSaving(false);
-      console.log("Calling fetchBoardMembers after save..."); // Added log
-      fetchBoardMembers(); // Always refetch to get the latest state for the admin panel
-      queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
+      console.log("Calling fetchBoardMembers after save...");
+      fetchBoardMembers();
+      queryClient.invalidateQueries({ queryKey: ["boardMembers"] });
     }
   };
 
   const confirmDelete = async () => {
     if (memberToDelete) {
-      setSaving(true); // Use saving state for delete too
+      setSaving(true);
       try {
         const { data: memberData, error: fetchError } = await supabase
           .from("board_members")
@@ -203,7 +208,7 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member deleted successfully!");
-        console.log("Deleted member from DB with ID:", memberToDelete); // Added log
+        console.log("Deleted member from DB with ID:", memberToDelete);
 
         if (memberData?.image_url) {
           const imagePath = memberData.image_url.split('board-member-images/')[1];
@@ -223,9 +228,9 @@ const BoardMembersAdmin = () => {
         setIsConfirmDeleteOpen(false);
         setMemberToDelete(null);
         setSaving(false);
-        console.log("Calling fetchBoardMembers after delete..."); // Added log
-        fetchBoardMembers(); // Always refetch
-        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
+        console.log("Calling fetchBoardMembers after delete...");
+        fetchBoardMembers();
+        queryClient.invalidateQueries({ queryKey: ["boardMembers"] });
       }
     }
   };

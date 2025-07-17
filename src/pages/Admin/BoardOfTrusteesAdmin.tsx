@@ -40,6 +40,11 @@ const BoardOfTrusteesAdmin = () => {
     fetchTrustees();
   }, []);
 
+  // New useEffect to log state changes
+  useEffect(() => {
+    console.log("Trustees state updated (in component):", trustees);
+  }, [trustees]);
+
   const fetchTrustees = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -52,7 +57,7 @@ const BoardOfTrusteesAdmin = () => {
       showError("Error fetching board of trustees: " + error.message);
       setTrustees([]);
     } else {
-      console.log("Fetched trustees data (in admin):", data); // Added log
+      console.log("Fetched trustees data (from Supabase):", data); // Clarified log
       setTrustees(data || []);
     }
     setLoading(false);
@@ -155,7 +160,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee updated successfully!");
-        console.log("Updated trustee in DB:", currentTrustee); // Added log
+        console.log("Updated trustee in DB:", currentTrustee);
       } else {
         // Add new trustee
         const { error } = await supabase.from("board_of_trustees").insert({
@@ -170,23 +175,23 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee added successfully!");
-        console.log("Added new trustee to DB:", currentTrustee); // Added log
+        console.log("Added new trustee to DB:", currentTrustee);
       }
-      setIsDialogOpen(false); // Close dialog only on success
+      setIsDialogOpen(false);
     } catch (error: any) {
       console.error("Error saving trustee:", error);
       showError("Error saving trustee: " + error.message);
     } finally {
       setSaving(false);
-      console.log("Calling fetchTrustees after save..."); // Added log
-      fetchTrustees(); // Always refetch to get the latest state for the admin panel
-      queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
+      console.log("Calling fetchTrustees after save...");
+      fetchTrustees();
+      queryClient.invalidateQueries({ queryKey: ["trustees"] });
     }
   };
 
   const confirmDelete = async () => {
     if (trusteeToDelete) {
-      setSaving(true); // Use saving state for delete too
+      setSaving(true);
       try {
         const { data: trusteeData, error: fetchError } = await supabase
           .from("board_of_trustees")
@@ -203,7 +208,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee deleted successfully!");
-        console.log("Deleted trustee from DB with ID:", trusteeToDelete); // Added log
+        console.log("Deleted trustee from DB with ID:", trusteeToDelete);
 
         if (trusteeData?.image_url) {
           const imagePath = trusteeData.image_url.split('trustee-images/')[1];
@@ -223,9 +228,9 @@ const BoardOfTrusteesAdmin = () => {
         setIsConfirmDeleteOpen(false);
         setTrusteeToDelete(null);
         setSaving(false);
-        console.log("Calling fetchTrustees after delete..."); // Added log
-        fetchTrustees(); // Always refetch
-        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
+        console.log("Calling fetchTrustees after delete...");
+        fetchTrustees();
+        queryClient.invalidateQueries({ queryKey: ["trustees"] });
       }
     }
   };
