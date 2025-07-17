@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Bell, Clock, FileText, Users, DollarSign, Gavel } from "lucide-react"; // Added Gavel icon
+import { Home, Bell, Clock, FileText, Users, DollarSign } from "lucide-react";
 
 const AdminLayout = () => {
   const adminNavItems = [
@@ -9,8 +9,7 @@ const AdminLayout = () => {
     { name: "Announcements", path: "/admin/announcements", icon: Bell },
     { name: "Iqamah Times", path: "/admin/iqamah", icon: Clock },
     { name: "Annual Reports", path: "/admin/reports", icon: FileText },
-    { name: "Board Members", path: "/admin/board-members", icon: Users },
-    { name: "Board of Trustees", path: "/admin/trustees", icon: Gavel }, // New nav item
+    { name: "Leadership", path: "/admin/leadership", icon: Users },
     { name: "Donation Causes", path: "/admin/donation-causes", icon: DollarSign },
   ];
 

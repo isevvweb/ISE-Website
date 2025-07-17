@@ -10,6 +10,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
+import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 
 interface BoardMember {
   id: string;
@@ -32,6 +33,7 @@ const BoardMembersAdmin = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient(); // Initialize useQueryClient
 
   useEffect(() => {
     fetchBoardMembers();
@@ -150,6 +152,7 @@ const BoardMembersAdmin = () => {
         showSuccess("Board member updated successfully!");
         setIsDialogOpen(false);
         fetchBoardMembers();
+        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }
     } else {
       // Add new member
@@ -169,6 +172,7 @@ const BoardMembersAdmin = () => {
         showSuccess("Board member added successfully!");
         setIsDialogOpen(false);
         fetchBoardMembers();
+        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }
     }
   };
@@ -208,6 +212,7 @@ const BoardMembersAdmin = () => {
           }
         }
         fetchBoardMembers();
+        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }
       setIsConfirmDeleteOpen(false);
       setMemberToDelete(null);

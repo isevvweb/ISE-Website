@@ -15,14 +15,16 @@ import Members from "./pages/Members";
 import Contact from "./pages/Contact";
 import Donate from "./pages/Donate";
 import BoardMembers from "./pages/BoardMembers";
-import BoardOfTrustees from "./pages/BoardOfTrustees"; // Import the new BoardOfTrustees page
+import BoardOfTrustees from "./pages/BoardOfTrustees";
 import AdminLayout from "@/pages/Admin/AdminLayout.tsx";
 import AdminDashboard from "@/pages/Admin/AdminDashboard.tsx";
 import AnnouncementsAdmin from "@/pages/Admin/AnnouncementsAdmin.tsx";
 import IqamahAdmin from "@/pages/Admin/IqamahAdmin.tsx";
 import AnnualReportsAdmin from "@/pages/Admin/AnnualReportsAdmin.tsx";
 import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx";
-import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
+import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
+import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
+import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx"; // Import the missing component
 
 const queryClient = new QueryClient();
 
@@ -42,7 +44,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/members" element={<Members />} />
           <Route path="/members/board" element={<BoardMembers />} />
-          <Route path="/members/trustees" element={<BoardOfTrustees />} /> {/* New route for Board of Trustees */}
+          <Route path="/members/trustees" element={<BoardOfTrustees />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/donate" element={<Donate />} />
         </Route>
@@ -53,8 +55,10 @@ const App = () => (
           <Route path="announcements" element={<AnnouncementsAdmin />} />
           <Route path="iqamah" element={<IqamahAdmin />} />
           <Route path="reports" element={<AnnualReportsAdmin />} />
-          <Route path="board-members" element={<BoardMembersAdmin />} />
           <Route path="donation-causes" element={<DonationCausesAdmin />} />
+          <Route path="leadership" element={<LeadershipAdmin />} />
+          <Route path="board-members" element={<BoardMembersAdmin />} />
+          <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
         </Route>
 
         {/* Catch-all route */}

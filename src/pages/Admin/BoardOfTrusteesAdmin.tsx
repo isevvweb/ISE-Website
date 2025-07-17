@@ -10,6 +10,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
 
 interface Trustee {
   id: string;
@@ -32,6 +33,7 @@ const BoardOfTrusteesAdmin = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient(); // Initialize useQueryClient
 
   useEffect(() => {
     fetchTrustees();
@@ -150,6 +152,7 @@ const BoardOfTrusteesAdmin = () => {
         showSuccess("Trustee updated successfully!");
         setIsDialogOpen(false);
         fetchTrustees();
+        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
     } else {
       // Add new trustee
@@ -169,6 +172,7 @@ const BoardOfTrusteesAdmin = () => {
         showSuccess("Trustee added successfully!");
         setIsDialogOpen(false);
         fetchTrustees();
+        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
     }
   };
@@ -208,6 +212,7 @@ const BoardOfTrusteesAdmin = () => {
           }
         }
         fetchTrustees();
+        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
       setIsConfirmDeleteOpen(false);
       setTrusteeToDelete(null);
