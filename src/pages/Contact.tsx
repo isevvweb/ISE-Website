@@ -69,21 +69,21 @@ const Contact = () => {
               <MapPin className="h-5 w-5 mr-3 text-primary" />
               <div>
                 <p className="font-semibold">Address:</p>
-                <p>123 Mosque Lane, Evansville, IN 47710</p>
+                <p>4200 Grimm Road, Newburgh, IN</p>
               </div>
             </div>
             <div className="flex items-center">
               <Phone className="h-5 w-5 mr-3 text-primary" />
               <div>
                 <p className="font-semibold">Phone:</p>
-                <a href="tel:+18125551234" className="hover:underline">(812) 555-1234</a>
+                <a href="tel:+18128538806" className="hover:underline">(812) 853-8806</a>
               </div>
             </div>
             <div className="flex items-center">
               <Mail className="h-5 w-5 mr-3 text-primary" />
               <div>
                 <p className="font-semibold">Email:</p>
-                <a href="mailto:info@evansvillemosque.org" className="hover:underline">info@evansvillemosque.org</a>
+                <a href="mailto:secretary@isevv.org" className="hover:underline">secretary@isevv.org</a>
               </div>
             </div>
             <div className="relative w-full h-64 rounded-lg overflow-hidden shadow-md mt-6">
@@ -98,9 +98,6 @@ const Contact = () => {
                 title="Mosque Location"
               ></iframe>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              (Map coordinates are placeholders. Please update with actual mosque location.)
-            </p>
           </CardContent>
         </Card>
 
