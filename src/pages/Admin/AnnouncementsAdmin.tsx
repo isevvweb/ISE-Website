@@ -136,8 +136,8 @@ const AnnouncementsAdmin = () => {
         .update({
           title: currentAnnouncement.title,
           description: currentAnnouncement.description,
-          announcement_date: imageUrlToSave ? imageUrlToSave : currentAnnouncement.announcement_date, // Use uploaded URL or existing
-          image_url: imageUrlToSave,
+          announcement_date: currentAnnouncement.announcement_date, // Corrected: always use the date
+          image_url: imageUrlToSave, // Corrected: always use the image URL
           is_active: currentAnnouncement.is_active,
         })
         .eq("id", currentAnnouncement.id);
