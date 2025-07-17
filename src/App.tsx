@@ -14,6 +14,7 @@ import About from "./pages/About";
 import Members from "./pages/Members";
 import Contact from "./pages/Contact";
 import Donate from "./pages/Donate";
+import BoardMembers from "./pages/BoardMembers"; // Import the new BoardMembers page
 import AdminLayout from "@/pages/Admin/AdminLayout.tsx";
 import AdminDashboard from "@/pages/Admin/AdminDashboard.tsx";
 import AnnouncementsAdmin from "@/pages/Admin/AnnouncementsAdmin.tsx";
@@ -39,7 +40,8 @@ const App = () => (
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/about" element={<About />} />
           <Route path="/members" element={<Members />} />
-          <Route path="/contact" element={<Contact />} /> {/* Corrected this line */}
+          <Route path="/members/board" element={<BoardMembers />} /> {/* New route for Board Members */}
+          <Route path="/contact" element={<Contact />} />
           <Route path="/donate" element={<Donate />} />
         </Route>
 

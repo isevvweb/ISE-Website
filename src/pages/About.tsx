@@ -54,9 +54,9 @@ const About = () => {
               Our mosque is guided by a dedicated team of board members who volunteer their time and expertise to serve the community. Their leadership ensures the smooth operation and strategic direction of the Islamic Society of Evansville.
             </p>
             <p className="mb-6">
-              Information about our current board members will be displayed here.
+              Click below to see the current board members and their roles.
             </p>
-            <Link to="/admin/board-members" className="text-blue-600 hover:underline font-medium">
+            <Link to="/members/board" className="text-blue-600 hover:underline font-medium">
               View Board Members
             </Link>
           </CardContent>
