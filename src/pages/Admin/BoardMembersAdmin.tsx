@@ -32,7 +32,7 @@ const BoardMembersAdmin = () => {
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [saving, setSaving] = useState(false); // Added saving state
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -52,7 +52,7 @@ const BoardMembersAdmin = () => {
       showError("Error fetching board members: " + error.message);
       setBoardMembers([]);
     } else {
-      console.log("Fetched board members data:", data);
+      console.log("Fetched board members data (in admin):", data); // Added log
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -155,6 +155,7 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member updated successfully!");
+        console.log("Updated member in DB:", currentMember); // Added log
       } else {
         // Add new member
         const { error } = await supabase.from("board_members").insert({
@@ -169,6 +170,7 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member added successfully!");
+        console.log("Added new member to DB:", currentMember); // Added log
       }
       setIsDialogOpen(false); // Close dialog only on success
     } catch (error: any) {
@@ -176,6 +178,7 @@ const BoardMembersAdmin = () => {
       showError("Error saving board member: " + error.message);
     } finally {
       setSaving(false);
+      console.log("Calling fetchBoardMembers after save..."); // Added log
       fetchBoardMembers(); // Always refetch to get the latest state for the admin panel
       queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
     }
@@ -200,6 +203,7 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member deleted successfully!");
+        console.log("Deleted member from DB with ID:", memberToDelete); // Added log
 
         if (memberData?.image_url) {
           const imagePath = memberData.image_url.split('board-member-images/')[1];
@@ -219,6 +223,7 @@ const BoardMembersAdmin = () => {
         setIsConfirmDeleteOpen(false);
         setMemberToDelete(null);
         setSaving(false);
+        console.log("Calling fetchBoardMembers after delete..."); // Added log
         fetchBoardMembers(); // Always refetch
         queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }

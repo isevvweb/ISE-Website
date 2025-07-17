@@ -32,7 +32,7 @@ const BoardOfTrusteesAdmin = () => {
   const [trusteeToDelete, setTrusteeToDelete] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [saving, setSaving] = useState(false); // Added saving state
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -52,7 +52,7 @@ const BoardOfTrusteesAdmin = () => {
       showError("Error fetching board of trustees: " + error.message);
       setTrustees([]);
     } else {
-      console.log("Fetched trustees data:", data);
+      console.log("Fetched trustees data (in admin):", data); // Added log
       setTrustees(data || []);
     }
     setLoading(false);
@@ -155,6 +155,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee updated successfully!");
+        console.log("Updated trustee in DB:", currentTrustee); // Added log
       } else {
         // Add new trustee
         const { error } = await supabase.from("board_of_trustees").insert({
@@ -169,6 +170,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee added successfully!");
+        console.log("Added new trustee to DB:", currentTrustee); // Added log
       }
       setIsDialogOpen(false); // Close dialog only on success
     } catch (error: any) {
@@ -176,6 +178,7 @@ const BoardOfTrusteesAdmin = () => {
       showError("Error saving trustee: " + error.message);
     } finally {
       setSaving(false);
+      console.log("Calling fetchTrustees after save..."); // Added log
       fetchTrustees(); // Always refetch to get the latest state for the admin panel
       queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
     }
@@ -200,6 +203,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee deleted successfully!");
+        console.log("Deleted trustee from DB with ID:", trusteeToDelete); // Added log
 
         if (trusteeData?.image_url) {
           const imagePath = trusteeData.image_url.split('trustee-images/')[1];
@@ -219,6 +223,7 @@ const BoardOfTrusteesAdmin = () => {
         setIsConfirmDeleteOpen(false);
         setTrusteeToDelete(null);
         setSaving(false);
+        console.log("Calling fetchTrustees after delete..."); // Added log
         fetchTrustees(); // Always refetch
         queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
