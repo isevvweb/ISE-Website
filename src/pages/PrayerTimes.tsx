@@ -3,6 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface PrayerTimesData {
   code: number;
@@ -88,25 +96,38 @@ const PrayerTimes = () => {
     refetchOnWindowFocus: false,
   });
 
-  const prayerOrder = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-center">Daily Prayer Times</h1>
 
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {prayerOrder.map((prayer) => (
-            <Card key={prayer}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-1/2" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="w-full max-w-md mx-auto">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4 mb-2" />
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                  <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {prayerOrder.map((prayer) => (
+                  <TableRow key={prayer}>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {error && (
@@ -121,24 +142,30 @@ const PrayerTimes = () => {
           <p className="text-center text-lg mb-6">
             Date: {data.data.date.readable} ({data.data.date.hijri.date} Hijri)
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {prayerOrder.map((prayer) => (
-              <Card key={prayer} className="flex flex-col items-center justify-center p-4">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-semibold">{prayer}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-3xl font-bold text-primary">
-                  {data.data.timings[prayer as keyof typeof data.data.timings]}
-                </CardContent>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Iqamah: <span className="font-medium">To be announced</span>
-                </p>
-              </Card>
-            ))}
-          </div>
+          <Card className="w-full max-w-md mx-auto">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Prayer</TableHead>
+                    <TableHead>Adhan</TableHead>
+                    <TableHead>Iqamah</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {prayerOrder.map((prayer) => (
+                    <TableRow key={prayer}>
+                      <TableCell className="font-medium">{prayer}</TableCell>
+                      <TableCell>{data.data.timings[prayer as keyof typeof data.data.timings]}</TableCell>
+                      <TableCell className="text-muted-foreground">To be announced</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
             Prayer times are calculated for Evansville, US using the ISNA method.
-            Iqamah times will be updated from the admin panel.
           </p>
         </>
       )}
