@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Removed useNavigate
-import { Info, Search } from "lucide-react"; // Removed LogIn, LogOut
+import { Link } from "react-router-dom";
+import { Info, Search, Menu } from "lucide-react"; // Added Menu icon
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,16 +11,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CreatorInfoDialog } from "@/components/CreatorInfoDialog";
-// Removed useSession import
-// Removed supabase import
-// Removed showError import
 
 const Header = () => {
   const [isCreatorInfoOpen, setIsCreatorInfoOpen] = React.useState(false);
-  // Removed session and isLoading states
-  // Removed navigate
-
-  // Removed handleSignOut function
 
   const publicRoutes = [
     { name: "Home", path: "/" },
@@ -79,20 +72,7 @@ const Header = () => {
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon" aria-label="Toggle navigation">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
+                <Menu className="h-6 w-6" /> {/* Replaced SVG with Lucide Menu icon */}
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
