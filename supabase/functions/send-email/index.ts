@@ -1,7 +1,5 @@
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-// @ts-ignore
-import { Resend } from "https://esm.sh/resend@1.1.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,27 +7,36 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("--- Function Start ---"); // Added for more precise logging
+  console.log("--- Function Start ---");
   console.log("Edge function received request.");
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log("Handling OPTIONS request."); // Added for more precise logging
+    console.log("Handling OPTIONS request.");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Attempting to parse request body."); // Added for more precise logging
+    console.log("Attempting to parse request body.");
     const { formType, data } = await req.json();
     console.log("Request body parsed:", { formType, data });
 
     // @ts-ignore
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    console.log("Resend client initialized.");
+    const SENDGRID_API_KEY = Deno.env.get('SENDGRID_API_KEY');
+    if (!SENDGRID_API_KEY) {
+      console.error("SENDGRID_API_KEY is not set.");
+      return new Response(JSON.stringify({ error: "Server configuration error: SendGrid API key missing." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    console.log("SendGrid API key retrieved.");
 
     let emailSubject = "";
     let emailBody = "";
     let toEmail = "isewebapi@gmail.com"; // Your recipient email
-    let replyToEmail = ""; // This will be the user's email
+    let fromEmail = "your_verified_sender_email@example.com"; // IMPORTANT: Replace with your VERIFIED SendGrid sender email
+    let replyToEmail = "";
 
     if (formType === "contact") {
       emailSubject = `New Contact Form Submission: ${data.subject}`;
@@ -39,7 +46,7 @@ serve(async (req) => {
         Subject: ${data.subject}
         Message: ${data.message}
       `;
-      replyToEmail = data.email; // Set reply-to to the sender's email
+      replyToEmail = data.email;
     } else if (formType === "quranRequest") {
       emailSubject = "New Quran Request";
       emailBody = `
@@ -47,7 +54,7 @@ serve(async (req) => {
         Email: ${data.email}
         Address: ${data.address}, ${data.city}, ${data.state} ${data.zip}
       `;
-      replyToEmail = data.email; // Set reply-to to the sender's email
+      replyToEmail = data.email;
     } else {
       console.warn("Invalid form type received:", formType);
       return new Response(JSON.stringify({ error: "Invalid form type" }), {
@@ -56,26 +63,39 @@ serve(async (req) => {
       });
     }
 
-    console.log("Attempting to send email with subject:", emailSubject);
+    console.log("Attempting to send email via SendGrid with subject:", emailSubject);
 
-    const { data: resendData, error } = await resend.emails.send({
-      from: 'onboarding@resend.dev', // Use Resend's verified sandbox domain
-      to: toEmail,
-      subject: emailSubject,
-      html: `<pre>${emailBody}</pre>`,
-      reply_to: replyToEmail, // Set the reply-to address
+    const sendGridResponse = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: toEmail }],
+          reply_to: { email: replyToEmail },
+        }],
+        from: { email: fromEmail },
+        subject: emailSubject,
+        content: [{
+          type: "text/plain",
+          value: emailBody,
+        }],
+      }),
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
+    if (!sendGridResponse.ok) {
+      const errorText = await sendGridResponse.text();
+      console.error("SendGrid API error:", sendGridResponse.status, errorText);
+      return new Response(JSON.stringify({ error: `Failed to send email via SendGrid: ${errorText}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: sendGridResponse.status,
       });
     }
 
-    console.log("Email sent successfully:", resendData);
-    return new Response(JSON.stringify({ message: "Email sent successfully!", data: resendData }), {
+    console.log("Email sent successfully via SendGrid.");
+    return new Response(JSON.stringify({ message: "Email sent successfully!" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
