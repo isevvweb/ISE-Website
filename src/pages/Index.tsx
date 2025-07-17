@@ -1,5 +1,3 @@
-import { MadeWithDyad } from "@/components/made-with-dyad";
-
 const Index = () => {
   return (
     <div className="flex flex-col justify-between items-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 sm:p-6 md:p-8 flex-grow">
@@ -11,7 +9,6 @@ const Index = () => {
           Building a vibrant community through faith, education, and service.
         </p>
       </main>
-      <MadeWithDyad />
     </div>
   );
 };
