@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
 import { showSuccess, showError } from "@/utils/toast"; // Using custom toast utilities
+import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
 
 const Contact = () => {
   const [contactForm, setContactForm] = React.useState({
@@ -44,6 +45,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY, // Use the imported constant
         },
         body: JSON.stringify({ formType: "contact", data: contactForm }),
       });
@@ -71,6 +73,7 @@ const Contact = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY, // Use the imported constant
         },
         body: JSON.stringify({ formType: "quranRequest", data: quranRequestForm }),
       });
