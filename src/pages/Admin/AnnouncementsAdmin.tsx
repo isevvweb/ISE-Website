@@ -136,8 +136,8 @@ const AnnouncementsAdmin = () => {
         .update({
           title: currentAnnouncement.title,
           description: currentAnnouncement.description,
-          announcement_date: currentAnnouncement.announcement_date, // Corrected: always use the date
-          image_url: imageUrlToSave, // Corrected: always use the image URL
+          announcement_date: currentAnnouncement.announcement_date,
+          image_url: imageUrlToSave,
           is_active: currentAnnouncement.is_active,
         })
         .eq("id", currentAnnouncement.id);
@@ -228,11 +228,13 @@ const AnnouncementsAdmin = () => {
           {announcements.map((announcement) => (
             <Card key={announcement.id}>
               {announcement.image_url && (
-                <img
-                  src={announcement.image_url}
-                  alt={announcement.title}
-                  className="w-full h-48 object-cover rounded-t-lg mb-4"
-                />
+                <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
+                  <img
+                    src={announcement.image_url}
+                    alt={announcement.title}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
               )}
               <CardHeader>
                 <CardTitle className="text-xl">{announcement.title}</CardTitle>
@@ -336,12 +338,11 @@ const AnnouncementsAdmin = () => {
                   ref={fileInputRef}
                 />
                 {(selectedFile || currentAnnouncement?.image_url) && (
-                  <div className="mt-2">
-                    <p className="text-sm text-muted-foreground mb-1">Current/Selected Image:</p>
+                  <div className="mt-2 w-full h-32 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
                     <img
                       src={selectedFile ? URL.createObjectURL(selectedFile) : currentAnnouncement?.image_url}
                       alt="Announcement Image Preview"
-                      className="w-full h-32 object-cover rounded-md"
+                      className="max-w-full max-h-full object-contain"
                     />
                   </div>
                 )}
