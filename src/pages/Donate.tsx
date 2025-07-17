@@ -75,9 +75,6 @@ const Donate = () => {
             </Card>
           ))}
         </div>
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
-          (Donation links will be managed via the admin panel and integrated with actual payment gateways.)
-        </p>
       </section>
 
       <Separator className="my-12" />

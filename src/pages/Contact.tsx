@@ -132,9 +132,6 @@ const Contact = () => {
               </div>
               <Button type="submit" className="w-full">Send Message</Button>
             </form>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-              (Form submission requires backend integration, e.g., Supabase Edge Function for sending emails.)
-            </p>
           </CardContent>
         </Card>
       </section>
@@ -179,9 +176,6 @@ const Contact = () => {
               </div>
               <Button type="submit" className="w-full">Request Quran</Button>
             </form>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-              (Quran request fulfillment requires backend integration for order processing and potentially an Edge Function for email notifications.)
-            </p>
           </CardContent>
         </Card>
       </section>

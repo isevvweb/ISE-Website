@@ -112,9 +112,6 @@ const YouthActivities = () => {
                   Instagram
                 </a>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                (Facebook posts integration requires backend setup)
-              </p>
             </div>
           </div>
         </div>

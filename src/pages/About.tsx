@@ -38,11 +38,8 @@ const About = () => {
               You can view our past annual reports to understand our progress and impact.
             </p>
             <Link to="/admin/reports" className="text-blue-600 hover:underline font-medium">
-              View Annual Reports (Admin Access Required)
+              View Annual Reports
             </Link>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              (Reports will be uploaded and managed via the admin panel.)
-            </p>
           </CardContent>
         </Card>
       </section>
@@ -60,11 +57,8 @@ const About = () => {
               Information about our current board members will be displayed here.
             </p>
             <Link to="/admin/board-members" className="text-blue-600 hover:underline font-medium">
-              Manage Board Members (Admin Access Required)
+              View Board Members
             </Link>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              (Board member profiles will be managed via the admin panel.)
-            </p>
           </CardContent>
         </Card>
       </section>

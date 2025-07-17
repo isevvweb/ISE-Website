@@ -40,9 +40,6 @@ const Members = () => {
             <Button className="w-full md:w-auto">
               Apply for Membership (Form Placeholder)
             </Button>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-              (Membership application and management will require backend integration, e.g., with Supabase for user profiles and data storage.)
-            </p>
           </CardContent>
         </Card>
       </section>
@@ -66,9 +63,6 @@ const Members = () => {
                 title="Community Events Calendar Placeholder"
               ></iframe>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-              (This is a placeholder calendar. The actual member-exclusive calendar would be integrated here, potentially with access control.)
-            </p>
           </CardContent>
         </Card>
       </section>

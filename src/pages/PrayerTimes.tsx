@@ -175,11 +175,7 @@ const PrayerTimes = () => {
             <h2 className="text-2xl font-bold mb-6">Jumu'ah Prayer</h2>
             <Card className="max-w-md mx-auto p-6">
               <CardContent className="text-gray-700 dark:text-gray-300">
-                <p className="text-xl font-semibold mb-4">First Jumu'ah: 1:30 PM</p>
-                <p className="text-xl font-semibold mb-4">Second Jumu'ah: 2:30 PM</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-                  (Jumu'ah times are subject to change and will be updated via the admin panel.)
-                </p>
+                <p className="text-xl font-semibold mb-4">Jumu'ah: 1:30 PM</p>
               </CardContent>
             </Card>
           </section>
