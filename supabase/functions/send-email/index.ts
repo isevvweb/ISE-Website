@@ -1,4 +1,6 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+// @ts-ignore
 import { Resend } from "https://esm.sh/resend@1.1.0";
 
 const corsHeaders = {
@@ -14,11 +16,12 @@ serve(async (req) => {
 
   try {
     const { formType, data } = await req.json();
+    // @ts-ignore
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
     let emailSubject = "";
     let emailBody = "";
-    let toEmail = "secretary@isevv.org"; // Default recipient for mosque communications
+    let toEmail = "isewebapi@gmail.com"; // Updated recipient email
 
     if (formType === "contact") {
       emailSubject = `New Contact Form Submission: ${data.subject}`;
