@@ -108,7 +108,7 @@ const YouthActivities = () => {
                 <a href="https://www.facebook.com/IslamicSocietyOfEvansville" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                   Facebook
                 </a>
-                <a href="https://www.instagram.com/islamicsocietyofevansville/" target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
+                <a href="https://www.instagram.com/ice_youth25?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
                   Instagram
                 </a>
               </div>
