@@ -6,25 +6,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
-import { showError, showSuccess } from "@/utils/toast"; // Using custom toast utilities
-import { Loader2 } from "lucide-react"; // Import Loader2 for loading state
+import { showError, showSuccess } from "@/utils/toast";
+import { Loader2 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup components
 
 interface Announcement {
   id: string;
   title: string;
   description: string;
-  announcement_date: string; // ISO date string
+  announcement_date: string;
   image_url?: string;
   is_active: boolean;
-  posted_at?: string; // New column for precise sorting
+  posted_at?: string;
 }
 
 const Announcements = () => {
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // Keeping for future text functionality
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [contactMethod, setContactMethod] = useState<"email" | "phone" | "both">("email"); // New state for contact method
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
-  const [isSubscribing, setIsSubscribing] = useState(false); // New state for subscription loading
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   useEffect(() => {
     fetchActiveAnnouncements();
@@ -35,8 +37,8 @@ const Announcements = () => {
     const { data, error } = await supabase
       .from("announcements")
       .select("*")
-      .eq("is_active", true) // Only fetch active announcements
-      .order("posted_at", { ascending: false }); // Sort by posted_at for newest first
+      .eq("is_active", true)
+      .order("posted_at", { ascending: false });
 
     if (error) {
       showError("Error fetching announcements: " + error.message);
@@ -50,8 +52,31 @@ const Announcements = () => {
     e.preventDefault();
     setIsSubscribing(true);
 
-    if (!email) {
-      showError("Please enter your email address to subscribe.");
+    let insertData: { email?: string; phone_number?: string } = {};
+    let hasInput = false;
+
+    if (contactMethod === "email" || contactMethod === "both") {
+      if (!email) {
+        showError("Please enter your email address.");
+        setIsSubscribing(false);
+        return;
+      }
+      insertData.email = email;
+      hasInput = true;
+    }
+
+    if (contactMethod === "phone" || contactMethod === "both") {
+      if (!phoneNumber) {
+        showError("Please enter your phone number.");
+        setIsSubscribing(false);
+        return;
+      }
+      insertData.phone_number = phoneNumber;
+      hasInput = true;
+    }
+
+    if (!hasInput) {
+      showError("Please select a contact method and provide the required information.");
       setIsSubscribing(false);
       return;
     }
@@ -59,18 +84,18 @@ const Announcements = () => {
     try {
       const { error } = await supabase
         .from("subscriptions")
-        .insert({ email: email });
+        .insert(insertData);
 
       if (error) {
         if (error.code === '23505') { // Unique constraint violation code
-          showError("You are already subscribed with this email address!");
+          showError("You are already subscribed with this email/phone number!");
         } else {
           showError("Error subscribing: " + error.message);
         }
       } else {
         showSuccess("Successfully subscribed to announcements!");
         setEmail("");
-        setPhoneNumber(""); // Clear phone number as well
+        setPhoneNumber("");
       }
     } catch (err: any) {
       showError("An unexpected error occurred: " + err.message);
@@ -133,27 +158,55 @@ const Announcements = () => {
           <CardContent>
             <form onSubmit={handleSubscribe} className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Label>Preferred Contact Method</Label>
+                <RadioGroup
+                  defaultValue="email"
+                  onValueChange={(value: "email" | "phone" | "both") => setContactMethod(value)}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="email" id="r1" />
+                    <Label htmlFor="r1">Email</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="phone" id="r2" />
+                    <Label htmlFor="r2">Phone</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="both" id="r3" />
+                    <Label htmlFor="r3">Both</Label>
+                  </div>
+                </RadioGroup>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="e.g., 123-456-7890"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  disabled // Disable for now as per request
-                />
-              </div>
+
+              {(contactMethod === "email" || contactMethod === "both") && (
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required={contactMethod === "email" || contactMethod === "both"}
+                  />
+                </div>
+              )}
+
+              {(contactMethod === "phone" || contactMethod === "both") && (
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="e.g., +15551234567"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required={contactMethod === "phone" || contactMethod === "both"}
+                  />
+                </div>
+              )}
+
               <Button type="submit" className="w-full" disabled={isSubscribing}>
                 {isSubscribing ? (
                   <>
