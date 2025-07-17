@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { showError } from "@/utils/toast";
 
 interface PrayerTimesData {
   code: number;
@@ -79,20 +81,41 @@ interface PrayerTimesData {
   };
 }
 
-const fetchPrayerTimes = async (): Promise<PrayerTimesData> => {
-  const response = await fetch(
-    "https://api.aladhan.com/v1/timingsByCity?city=Evansville&country=US&method=2" // Method 2 is ISNA
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch prayer times");
+interface IqamahTime {
+  prayer_name: string;
+  iqamah_time: string;
+}
+
+const fetchPrayerTimesAndIqamah = async (): Promise<{
+  apiTimes: PrayerTimesData;
+  iqamahTimes: Record<string, string>;
+}> => {
+  const [apiResponse, iqamahResponse] = await Promise.all([
+    fetch("https://api.aladhan.com/v1/timingsByCity?city=Evansville&country=US&method=2"), // Method 2 is ISNA
+    supabase.from("iqamah_times").select("*"),
+  ]);
+
+  if (!apiResponse.ok) {
+    throw new Error("Failed to fetch prayer times from external API");
   }
-  return response.json();
+  const apiData: PrayerTimesData = await apiResponse.json();
+
+  if (iqamahResponse.error) {
+    throw new Error("Failed to fetch iqamah times from database: " + iqamahResponse.error.message);
+  }
+
+  const iqamahTimesMap: Record<string, string> = {};
+  iqamahResponse.data.forEach((item: IqamahTime) => {
+    iqamahTimesMap[item.prayer_name] = item.iqamah_time;
+  });
+
+  return { apiTimes: apiData, iqamahTimes: iqamahTimesMap };
 };
 
 const PrayerTimes = () => {
-  const { data, isLoading, error } = useQuery<PrayerTimesData, Error>({
-    queryKey: ["prayerTimes"],
-    queryFn: fetchPrayerTimes,
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["prayerTimesAndIqamah"],
+    queryFn: fetchPrayerTimesAndIqamah,
     staleTime: 1000 * 60 * 60 * 12, // Data considered fresh for 12 hours
     refetchOnWindowFocus: false,
   });
@@ -141,7 +164,7 @@ const PrayerTimes = () => {
       {data && (
         <>
           <p className="text-center text-lg mb-6">
-            Date: {data.data.date.readable} ({data.data.date.hijri.date} Hijri)
+            Date: {data.apiTimes.data.date.readable} ({data.apiTimes.data.date.hijri.date} Hijri)
           </p>
           <Card className="w-full max-w-md mx-auto">
             <CardContent className="p-0">
@@ -157,15 +180,19 @@ const PrayerTimes = () => {
                   {prayerOrder.map((prayer) => (
                     <TableRow key={prayer}>
                       <TableCell className="font-medium">{prayer}</TableCell>
-                      <TableCell>{data.data.timings[prayer as keyof typeof data.data.timings]}</TableCell>
-                      <TableCell className="text-muted-foreground">To be announced</TableCell>
+                      <TableCell>{data.apiTimes.data.timings[prayer as keyof typeof data.apiTimes.data.timings]}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {data.iqamahTimes[prayer] || "N/A"}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-          <p className="text-center text-xl font-medium mt-8 text-gray-700 dark:text-gray-300">Jumu'ah: 1:30 PM</p>
+          <p className="text-center text-xl font-medium mt-8 text-gray-700 dark:text-gray-300">
+            Jumu'ah: {data.iqamahTimes["Jumuah"] || "N/A"}
+          </p>
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
             Prayer times are calculated for Evansville, US using the ISNA method.
           </p>
