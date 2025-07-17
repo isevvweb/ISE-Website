@@ -4,10 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
-import { showError } from "@/utils/toast";
+import { showError, showSuccess } from "@/utils/toast"; // Using custom toast utilities
+import { Loader2 } from "lucide-react"; // Import Loader2 for loading state
 
 interface Announcement {
   id: string;
@@ -20,11 +20,11 @@ interface Announcement {
 }
 
 const Announcements = () => {
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // Keeping for future text functionality
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+  const [isSubscribing, setIsSubscribing] = useState(false); // New state for subscription loading
 
   useEffect(() => {
     fetchActiveAnnouncements();
@@ -46,17 +46,37 @@ const Announcements = () => {
     setLoadingAnnouncements(false);
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real application, this data would be sent to a backend (e.g., Supabase)
-    // for storage and integration with an email/SMS service.
-    console.log("Subscription attempt:", { email, phoneNumber });
-    toast({
-      title: "Subscription Request Sent!",
-      description: "Thank you for your interest. We'll be in touch!",
-    });
-    setEmail("");
-    setPhoneNumber("");
+    setIsSubscribing(true);
+
+    if (!email) {
+      showError("Please enter your email address to subscribe.");
+      setIsSubscribing(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("subscriptions")
+        .insert({ email: email });
+
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation code
+          showError("You are already subscribed with this email address!");
+        } else {
+          showError("Error subscribing: " + error.message);
+        }
+      } else {
+        showSuccess("Successfully subscribed to announcements!");
+        setEmail("");
+        setPhoneNumber(""); // Clear phone number as well
+      }
+    } catch (err: any) {
+      showError("An unexpected error occurred: " + err.message);
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   return (
@@ -120,6 +140,7 @@ const Announcements = () => {
                   placeholder="your@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
               </div>
               <div className="grid gap-2">
@@ -130,10 +151,17 @@ const Announcements = () => {
                   placeholder="e.g., 123-456-7890"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
+                  disabled // Disable for now as per request
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Subscribe
+              <Button type="submit" className="w-full" disabled={isSubscribing}>
+                {isSubscribing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Subscribing...
+                  </>
+                ) : (
+                  "Subscribe"
+                )}
               </Button>
             </form>
           </CardContent>
