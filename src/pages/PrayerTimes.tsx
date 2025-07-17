@@ -174,7 +174,7 @@ const PrayerTimes = () => {
           <section className="mb-12 text-center">
             <h2 className="text-2xl font-bold mb-6">Jumu'ah Prayer</h2>
             <div className="max-w-md mx-auto p-6">
-              <p className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Jumu'ah: 1:30 PM</p>
+              <p className="text-gray-700 dark:text-gray-300">Jumu'ah: 1:30 PM</p>
             </div>
           </section>
         </>
