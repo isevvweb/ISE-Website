@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log("--- Send SMS Function Start (Vonage) ---");
+  console.log("--- Send SMS Function Start (Sinch) ---");
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -27,50 +27,53 @@ serve(async (req) => {
     }
 
     // @ts-ignore
-    const vonageApiKey = Deno.env.get('VONAGE_API_KEY');
+    const sinchServicePlanId = Deno.env.get('SINCH_SERVICE_PLAN_ID');
     // @ts-ignore
-    const vonageApiSecret = Deno.env.get('VONAGE_API_SECRET');
+    const sinchApiKey = Deno.env.get('SINCH_API_KEY');
     // @ts-ignore
-    const vonagePhoneNumber = Deno.env.get('VONAGE_PHONE_NUMBER');
+    const sinchApiSecret = Deno.env.get('SINCH_API_SECRET');
+    // @ts-ignore
+    const sinchPhoneNumber = Deno.env.get('SINCH_PHONE_NUMBER');
 
-    if (!vonageApiKey || !vonageApiSecret || !vonagePhoneNumber) {
-      console.error("Vonage environment variables not set.");
-      return new Response(JSON.stringify({ error: "Vonage credentials not configured." }), {
+    if (!sinchServicePlanId || !sinchApiKey || !sinchApiSecret || !sinchPhoneNumber) {
+      console.error("Sinch environment variables not set.");
+      return new Response(JSON.stringify({ error: "Sinch credentials not configured." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
     }
 
-    const vonageApiUrl = 'https://rest.nexmo.com/sms/json';
+    const sinchApiUrl = `https://sms.api.sinch.com/xms/v1/${sinchServicePlanId}/batches`;
+    const authHeader = `Basic ${btoa(`${sinchApiKey}:${sinchApiSecret}`)}`;
 
-    const body = new URLSearchParams();
-    body.append('api_key', vonageApiKey);
-    body.append('api_secret', vonageApiSecret);
-    body.append('to', to);
-    body.append('from', vonagePhoneNumber);
-    body.append('text', message);
+    const requestBody = {
+      from: sinchPhoneNumber,
+      to: [to], // Sinch expects 'to' as an array
+      body: message,
+    };
 
-    console.log("Sending SMS via Vonage API...");
-    const vonageResponse = await fetch(vonageApiUrl, {
+    console.log("Sending SMS via Sinch API...");
+    const sinchResponse = await fetch(sinchApiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
       },
-      body: body.toString(),
+      body: JSON.stringify(requestBody),
     });
 
-    const vonageData = await vonageResponse.json();
+    const sinchData = await sinchResponse.json();
 
-    if (!vonageResponse.ok || vonageData.messages[0].status !== "0") {
-      console.error("Vonage API error:", vonageData);
-      return new Response(JSON.stringify({ error: vonageData.messages[0].error_text || "Failed to send SMS via Vonage." }), {
+    if (!sinchResponse.ok) {
+      console.error("Sinch API error:", sinchData);
+      return new Response(JSON.stringify({ error: sinchData.message || "Failed to send SMS via Sinch." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: vonageResponse.status,
+        status: sinchResponse.status,
       });
     }
 
-    console.log("SMS sent successfully via Vonage:", vonageData);
-    return new Response(JSON.stringify({ message: "SMS sent successfully!", data: vonageData }), {
+    console.log("SMS sent successfully via Sinch:", sinchData);
+    return new Response(JSON.stringify({ message: "SMS sent successfully!", data: sinchData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
