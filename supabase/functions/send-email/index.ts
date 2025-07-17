@@ -9,13 +9,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("--- Function Start ---"); // Added for more precise logging
   console.log("Edge function received request.");
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log("Handling OPTIONS request."); // Added for more precise logging
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log("Attempting to parse request body."); // Added for more precise logging
     const { formType, data } = await req.json();
     console.log("Request body parsed:", { formType, data });
 
@@ -77,7 +80,7 @@ serve(async (req) => {
       status: 200,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Function error (caught):", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
