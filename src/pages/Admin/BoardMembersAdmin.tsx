@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { showSuccess, showError } from "@/utils/toast";
 import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
-import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
-import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
+import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BoardMember {
   id: string;
@@ -32,8 +32,9 @@ const BoardMembersAdmin = () => {
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [saving, setSaving] = useState(false); // Added saving state
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient(); // Initialize useQueryClient
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchBoardMembers();
@@ -47,8 +48,11 @@ const BoardMembersAdmin = () => {
       .order("display_order", { ascending: true });
 
     if (error) {
+      console.error("Error fetching board members from Supabase:", error);
       showError("Error fetching board members: " + error.message);
+      setBoardMembers([]);
     } else {
+      console.log("Fetched board members data:", data);
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -70,7 +74,7 @@ const BoardMembersAdmin = () => {
 
   const handleEditClick = (member: BoardMember) => {
     setCurrentMember({ ...member });
-    setSelectedFile(null); // Clear selected file when editing
+    setSelectedFile(null);
     setIsDialogOpen(true);
   };
 
@@ -121,21 +125,39 @@ const BoardMembersAdmin = () => {
       return;
     }
 
+    setSaving(true);
     let imageUrlToSave = currentMember.image_url;
-    if (selectedFile) {
-      const uploadedUrl = await uploadImage();
-      if (uploadedUrl === null) {
-        // If upload failed, stop the save process
-        return;
-      }
-      imageUrlToSave = uploadedUrl;
-    }
 
-    if (currentMember.id) {
-      // Update existing member
-      const { error } = await supabase
-        .from("board_members")
-        .update({
+    try {
+      if (selectedFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl === null) {
+          // If upload failed, stop the save process
+          return;
+        }
+        imageUrlToSave = uploadedUrl;
+      }
+
+      if (currentMember.id) {
+        // Update existing member
+        const { error } = await supabase
+          .from("board_members")
+          .update({
+            name: currentMember.name,
+            role: currentMember.role,
+            bio: currentMember.bio,
+            image_url: imageUrlToSave,
+            email: currentMember.email,
+            phone: currentMember.phone,
+            display_order: currentMember.display_order,
+          })
+          .eq("id", currentMember.id);
+
+        if (error) throw error;
+        showSuccess("Board member updated successfully!");
+      } else {
+        // Add new member
+        const { error } = await supabase.from("board_members").insert({
           name: currentMember.name,
           role: currentMember.role,
           bio: currentMember.bio,
@@ -143,63 +165,42 @@ const BoardMembersAdmin = () => {
           email: currentMember.email,
           phone: currentMember.phone,
           display_order: currentMember.display_order,
-        })
-        .eq("id", currentMember.id);
+        });
 
-      if (error) {
-        showError("Error updating board member: " + error.message);
-      } else {
-        showSuccess("Board member updated successfully!");
-        setIsDialogOpen(false);
-        fetchBoardMembers();
-        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
-      }
-    } else {
-      // Add new member
-      const { error } = await supabase.from("board_members").insert({
-        name: currentMember.name,
-        role: currentMember.role,
-        bio: currentMember.bio,
-        image_url: imageUrlToSave,
-        email: currentMember.email,
-        phone: currentMember.phone,
-        display_order: currentMember.display_order,
-      });
-
-      if (error) {
-        showError("Error adding board member: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Board member added successfully!");
-        setIsDialogOpen(false);
-        fetchBoardMembers();
-        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }
+      setIsDialogOpen(false); // Close dialog only on success
+    } catch (error: any) {
+      console.error("Error saving board member:", error);
+      showError("Error saving board member: " + error.message);
+    } finally {
+      setSaving(false);
+      fetchBoardMembers(); // Always refetch to get the latest state for the admin panel
+      queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
     }
   };
 
   const confirmDelete = async () => {
     if (memberToDelete) {
-      const { data: memberData, error: fetchError } = await supabase
-        .from("board_members")
-        .select("image_url")
-        .eq("id", memberToDelete)
-        .single();
+      setSaving(true); // Use saving state for delete too
+      try {
+        const { data: memberData, error: fetchError } = await supabase
+          .from("board_members")
+          .select("image_url")
+          .eq("id", memberToDelete)
+          .single();
 
-      if (fetchError) {
-        showError("Error fetching member for image deletion: " + fetchError.message);
-        return;
-      }
+        if (fetchError) throw fetchError;
 
-      const { error } = await supabase
-        .from("board_members")
-        .delete()
-        .eq("id", memberToDelete);
+        const { error } = await supabase
+          .from("board_members")
+          .delete()
+          .eq("id", memberToDelete);
 
-      if (error) {
-        showError("Error deleting board member: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Board member deleted successfully!");
-        // Optionally delete image from storage if it exists
+
         if (memberData?.image_url) {
           const imagePath = memberData.image_url.split('board-member-images/')[1];
           if (imagePath) {
@@ -211,11 +212,16 @@ const BoardMembersAdmin = () => {
             }
           }
         }
-        fetchBoardMembers();
+      } catch (error: any) {
+        console.error("Error deleting board member:", error);
+        showError("Error deleting board member: " + error.message);
+      } finally {
+        setIsConfirmDeleteOpen(false);
+        setMemberToDelete(null);
+        setSaving(false);
+        fetchBoardMembers(); // Always refetch
         queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public page cache
       }
-      setIsConfirmDeleteOpen(false);
-      setMemberToDelete(null);
     }
   };
 
@@ -383,8 +389,8 @@ const BoardMembersAdmin = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveMember} disabled={uploadingImage}>
-              {uploadingImage ? (
+            <Button onClick={handleSaveMember} disabled={saving || uploadingImage}>
+              {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>
@@ -407,7 +413,15 @@ const BoardMembersAdmin = () => {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

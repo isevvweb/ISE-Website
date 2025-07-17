@@ -10,7 +10,7 @@ import { showSuccess, showError } from "@/utils/toast";
 import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Trustee {
   id: string;
@@ -32,8 +32,9 @@ const BoardOfTrusteesAdmin = () => {
   const [trusteeToDelete, setTrusteeToDelete] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [saving, setSaving] = useState(false); // Added saving state
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient(); // Initialize useQueryClient
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     fetchTrustees();
@@ -47,8 +48,11 @@ const BoardOfTrusteesAdmin = () => {
       .order("display_order", { ascending: true });
 
     if (error) {
+      console.error("Error fetching trustees from Supabase:", error);
       showError("Error fetching board of trustees: " + error.message);
+      setTrustees([]);
     } else {
+      console.log("Fetched trustees data:", data);
       setTrustees(data || []);
     }
     setLoading(false);
@@ -70,7 +74,7 @@ const BoardOfTrusteesAdmin = () => {
 
   const handleEditClick = (trustee: Trustee) => {
     setCurrentTrustee({ ...trustee });
-    setSelectedFile(null); // Clear selected file when editing
+    setSelectedFile(null);
     setIsDialogOpen(true);
   };
 
@@ -121,21 +125,39 @@ const BoardOfTrusteesAdmin = () => {
       return;
     }
 
+    setSaving(true);
     let imageUrlToSave = currentTrustee.image_url;
-    if (selectedFile) {
-      const uploadedUrl = await uploadImage();
-      if (uploadedUrl === null) {
-        // If upload failed, stop the save process
-        return;
-      }
-      imageUrlToSave = uploadedUrl;
-    }
 
-    if (currentTrustee.id) {
-      // Update existing trustee
-      const { error } = await supabase
-        .from("board_of_trustees")
-        .update({
+    try {
+      if (selectedFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl === null) {
+          // If upload failed, stop the save process
+          return;
+        }
+        imageUrlToSave = uploadedUrl;
+      }
+
+      if (currentTrustee.id) {
+        // Update existing trustee
+        const { error } = await supabase
+          .from("board_of_trustees")
+          .update({
+            name: currentTrustee.name,
+            role: currentTrustee.role,
+            bio: currentTrustee.bio,
+            image_url: imageUrlToSave,
+            email: currentTrustee.email,
+            phone: currentTrustee.phone,
+            display_order: currentTrustee.display_order,
+          })
+          .eq("id", currentTrustee.id);
+
+        if (error) throw error;
+        showSuccess("Trustee updated successfully!");
+      } else {
+        // Add new trustee
+        const { error } = await supabase.from("board_of_trustees").insert({
           name: currentTrustee.name,
           role: currentTrustee.role,
           bio: currentTrustee.bio,
@@ -143,63 +165,42 @@ const BoardOfTrusteesAdmin = () => {
           email: currentTrustee.email,
           phone: currentTrustee.phone,
           display_order: currentTrustee.display_order,
-        })
-        .eq("id", currentTrustee.id);
+        });
 
-      if (error) {
-        showError("Error updating trustee: " + error.message);
-      } else {
-        showSuccess("Trustee updated successfully!");
-        setIsDialogOpen(false);
-        fetchTrustees();
-        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
-      }
-    } else {
-      // Add new trustee
-      const { error } = await supabase.from("board_of_trustees").insert({
-        name: currentTrustee.name,
-        role: currentTrustee.role,
-        bio: currentTrustee.bio,
-        image_url: imageUrlToSave,
-        email: currentTrustee.email,
-        phone: currentTrustee.phone,
-        display_order: currentTrustee.display_order,
-      });
-
-      if (error) {
-        showError("Error adding trustee: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Trustee added successfully!");
-        setIsDialogOpen(false);
-        fetchTrustees();
-        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
+      setIsDialogOpen(false); // Close dialog only on success
+    } catch (error: any) {
+      console.error("Error saving trustee:", error);
+      showError("Error saving trustee: " + error.message);
+    } finally {
+      setSaving(false);
+      fetchTrustees(); // Always refetch to get the latest state for the admin panel
+      queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
     }
   };
 
   const confirmDelete = async () => {
     if (trusteeToDelete) {
-      const { data: trusteeData, error: fetchError } = await supabase
-        .from("board_of_trustees")
-        .select("image_url")
-        .eq("id", trusteeToDelete)
-        .single();
+      setSaving(true); // Use saving state for delete too
+      try {
+        const { data: trusteeData, error: fetchError } = await supabase
+          .from("board_of_trustees")
+          .select("image_url")
+          .eq("id", trusteeToDelete)
+          .single();
 
-      if (fetchError) {
-        showError("Error fetching trustee for image deletion: " + fetchError.message);
-        return;
-      }
+        if (fetchError) throw fetchError;
 
-      const { error } = await supabase
-        .from("board_of_trustees")
-        .delete()
-        .eq("id", trusteeToDelete);
+        const { error } = await supabase
+          .from("board_of_trustees")
+          .delete()
+          .eq("id", trusteeToDelete);
 
-      if (error) {
-        showError("Error deleting trustee: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Trustee deleted successfully!");
-        // Optionally delete image from storage if it exists
+
         if (trusteeData?.image_url) {
           const imagePath = trusteeData.image_url.split('trustee-images/')[1];
           if (imagePath) {
@@ -211,11 +212,16 @@ const BoardOfTrusteesAdmin = () => {
             }
           }
         }
-        fetchTrustees();
+      } catch (error: any) {
+        console.error("Error deleting trustee:", error);
+        showError("Error deleting trustee: " + error.message);
+      } finally {
+        setIsConfirmDeleteOpen(false);
+        setTrusteeToDelete(null);
+        setSaving(false);
+        fetchTrustees(); // Always refetch
         queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public page cache
       }
-      setIsConfirmDeleteOpen(false);
-      setTrusteeToDelete(null);
     }
   };
 
@@ -383,8 +389,8 @@ const BoardOfTrusteesAdmin = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveTrustee} disabled={uploadingImage}>
-              {uploadingImage ? (
+            <Button onClick={handleSaveTrustee} disabled={saving || uploadingImage}>
+              {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>
@@ -407,7 +413,15 @@ const BoardOfTrusteesAdmin = () => {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
