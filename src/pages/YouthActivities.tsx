@@ -72,7 +72,7 @@ const YouthActivities = () => {
             <h3 className="text-xl font-semibold mb-4">Upcoming Events Calendar</h3>
             <div className="relative w-full" style={{ paddingBottom: "75%" }}> {/* 4:3 Aspect Ratio */}
               <iframe
-                src="https://calendar.google.com/calendar/embed?src=en.usa%23holiday%40group.v.calendar.google.com&ctz=America%2FNew_York"
+                src="https://calendar.google.com/calendar/embed?src=199d2363fbb2b1354d629ab458ba807ac16afc63f329f647449011f4c60e41b2%40group.calendar.google.com&ctz=America%2FChicago"
                 style={{ border: 0 }}
                 width="100%"
                 height="100%"
