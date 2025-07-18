@@ -40,7 +40,7 @@ const BoardOfTrusteesAdmin = () => {
     fetchTrustees();
   }, []);
 
-  // New useEffect to log state changes
+  // This useEffect is for debugging and confirms state updates
   useEffect(() => {
     console.log("Trustees state updated (in component):", trustees);
   }, [trustees]);
@@ -57,7 +57,7 @@ const BoardOfTrusteesAdmin = () => {
       showError("Error fetching board of trustees: " + error.message);
       setTrustees([]);
     } else {
-      console.log("Fetched trustees data (from Supabase):", data); // Clarified log
+      console.log("Fetched trustees data (from Supabase):", data);
       setTrustees(data || []);
     }
     setLoading(false);
@@ -137,14 +137,12 @@ const BoardOfTrusteesAdmin = () => {
       if (selectedFile) {
         const uploadedUrl = await uploadImage();
         if (uploadedUrl === null) {
-          // If upload failed, stop the save process
           return;
         }
         imageUrlToSave = uploadedUrl;
       }
 
       if (currentTrustee.id) {
-        // Update existing trustee
         const { error } = await supabase
           .from("board_of_trustees")
           .update({
@@ -162,7 +160,6 @@ const BoardOfTrusteesAdmin = () => {
         showSuccess("Trustee updated successfully!");
         console.log("Updated trustee in DB:", currentTrustee);
       } else {
-        // Add new trustee
         const { error } = await supabase.from("board_of_trustees").insert({
           name: currentTrustee.name,
           role: currentTrustee.role,
@@ -249,7 +246,7 @@ const BoardOfTrusteesAdmin = () => {
       ) : trustees.length === 0 ? (
         <p className="text-center text-muted-foreground">No board of trustees members found. Click "Add New Trustee" to create one.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" key={JSON.stringify(trustees.map(t => t.id))}>
           {trustees.map((trustee) => (
             <Card key={trustee.id}>
               {trustee.image_url && (

@@ -40,7 +40,7 @@ const BoardMembersAdmin = () => {
     fetchBoardMembers();
   }, []);
 
-  // New useEffect to log state changes
+  // This useEffect is for debugging and confirms state updates
   useEffect(() => {
     console.log("BoardMembers state updated (in component):", boardMembers);
   }, [boardMembers]);
@@ -57,7 +57,7 @@ const BoardMembersAdmin = () => {
       showError("Error fetching board members: " + error.message);
       setBoardMembers([]);
     } else {
-      console.log("Fetched board members data (from Supabase):", data); // Clarified log
+      console.log("Fetched board members data (from Supabase):", data);
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -137,14 +137,12 @@ const BoardMembersAdmin = () => {
       if (selectedFile) {
         const uploadedUrl = await uploadImage();
         if (uploadedUrl === null) {
-          // If upload failed, stop the save process
           return;
         }
         imageUrlToSave = uploadedUrl;
       }
 
       if (currentMember.id) {
-        // Update existing member
         const { error } = await supabase
           .from("board_members")
           .update({
@@ -162,7 +160,6 @@ const BoardMembersAdmin = () => {
         showSuccess("Board member updated successfully!");
         console.log("Updated member in DB:", currentMember);
       } else {
-        // Add new member
         const { error } = await supabase.from("board_members").insert({
           name: currentMember.name,
           role: currentMember.role,
@@ -249,7 +246,7 @@ const BoardMembersAdmin = () => {
       ) : boardMembers.length === 0 ? (
         <p className="text-center text-muted-foreground">No board members found. Click "Add New Member" to create one.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" key={JSON.stringify(boardMembers.map(m => m.id))}>
           {boardMembers.map((member) => (
             <Card key={member.id}>
               {member.image_url && (
