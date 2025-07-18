@@ -14,17 +14,17 @@ import About from "./pages/About";
 import Members from "./pages/Members";
 import Contact from "./pages/Contact";
 import Donate from "./pages/Donate";
-import BoardMembers from "./pages/BoardMembers";
-import BoardOfTrustees from "./pages/BoardOfTrustees";
+import BoardMembers from "./pages/BoardMembers"; // Re-import
+import BoardOfTrustees from "./pages/BoardOfTrustees"; // Re-import
 import AdminLayout from "@/pages/Admin/AdminLayout.tsx";
 import AdminDashboard from "@/pages/Admin/AdminDashboard.tsx";
 import AnnouncementsAdmin from "@/pages/Admin/AnnouncementsAdmin.tsx";
 import IqamahAdmin from "@/pages/Admin/IqamahAdmin.tsx";
 import AnnualReportsAdmin from "@/pages/Admin/AnnualReportsAdmin.tsx";
-import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx";
-import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
+import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx"; // Re-import
+import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx"; // Re-import
 import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
-import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx"; // Import the missing component
+import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 
 const queryClient = new QueryClient();
 

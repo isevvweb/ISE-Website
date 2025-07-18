@@ -7,9 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
+import { Edit, Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
-import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface BoardMember {
@@ -40,11 +39,6 @@ const BoardMembersAdmin = () => {
     fetchBoardMembers();
   }, []);
 
-  // This useEffect is for debugging and confirms state updates
-  useEffect(() => {
-    console.log("BoardMembers state updated (in component):", boardMembers);
-  }, [boardMembers]);
-
   const fetchBoardMembers = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -53,11 +47,9 @@ const BoardMembersAdmin = () => {
       .order("display_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching board members from Supabase:", error);
       showError("Error fetching board members: " + error.message);
       setBoardMembers([]);
     } else {
-      console.log("Fetched board members data (from Supabase):", data);
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -137,6 +129,7 @@ const BoardMembersAdmin = () => {
       if (selectedFile) {
         const uploadedUrl = await uploadImage();
         if (uploadedUrl === null) {
+          setSaving(false); // Stop saving if image upload failed
           return;
         }
         imageUrlToSave = uploadedUrl;
@@ -158,7 +151,6 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member updated successfully!");
-        console.log("Updated member in DB:", currentMember);
       } else {
         const { error } = await supabase.from("board_members").insert({
           name: currentMember.name,
@@ -172,17 +164,14 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member added successfully!");
-        console.log("Added new member to DB:", currentMember);
       }
       setIsDialogOpen(false);
     } catch (error: any) {
-      console.error("Error saving board member:", error);
       showError("Error saving board member: " + error.message);
     } finally {
       setSaving(false);
-      console.log("Calling fetchBoardMembers after save...");
-      fetchBoardMembers();
-      queryClient.invalidateQueries({ queryKey: ["boardMembers"] });
+      fetchBoardMembers(); // Re-fetch to update the list
+      queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public query
     }
   };
 
@@ -205,7 +194,6 @@ const BoardMembersAdmin = () => {
 
         if (error) throw error;
         showSuccess("Board member deleted successfully!");
-        console.log("Deleted member from DB with ID:", memberToDelete);
 
         if (memberData?.image_url) {
           const imagePath = memberData.image_url.split('board-member-images/')[1];
@@ -219,15 +207,13 @@ const BoardMembersAdmin = () => {
           }
         }
       } catch (error: any) {
-        console.error("Error deleting board member:", error);
         showError("Error deleting board member: " + error.message);
       } finally {
         setIsConfirmDeleteOpen(false);
         setMemberToDelete(null);
         setSaving(false);
-        console.log("Calling fetchBoardMembers after delete...");
-        fetchBoardMembers();
-        queryClient.invalidateQueries({ queryKey: ["boardMembers"] });
+        fetchBoardMembers(); // Re-fetch to update the list
+        queryClient.invalidateQueries({ queryKey: ["boardMembers"] }); // Invalidate public query
       }
     }
   };
@@ -246,7 +232,7 @@ const BoardMembersAdmin = () => {
       ) : boardMembers.length === 0 ? (
         <p className="text-center text-muted-foreground">No board members found. Click "Add New Member" to create one.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" key={JSON.stringify(boardMembers.map(m => m.id))}>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {boardMembers.map((member) => (
             <Card key={member.id}>
               {member.image_url && (

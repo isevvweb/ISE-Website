@@ -7,9 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
+import { Edit, Trash2, PlusCircle, Loader2 } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
-import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Trustee {
@@ -40,11 +39,6 @@ const BoardOfTrusteesAdmin = () => {
     fetchTrustees();
   }, []);
 
-  // This useEffect is for debugging and confirms state updates
-  useEffect(() => {
-    console.log("Trustees state updated (in component):", trustees);
-  }, [trustees]);
-
   const fetchTrustees = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -53,11 +47,9 @@ const BoardOfTrusteesAdmin = () => {
       .order("display_order", { ascending: true });
 
     if (error) {
-      console.error("Error fetching trustees from Supabase:", error);
       showError("Error fetching board of trustees: " + error.message);
       setTrustees([]);
     } else {
-      console.log("Fetched trustees data (from Supabase):", data);
       setTrustees(data || []);
     }
     setLoading(false);
@@ -137,6 +129,7 @@ const BoardOfTrusteesAdmin = () => {
       if (selectedFile) {
         const uploadedUrl = await uploadImage();
         if (uploadedUrl === null) {
+          setSaving(false); // Stop saving if image upload failed
           return;
         }
         imageUrlToSave = uploadedUrl;
@@ -158,7 +151,6 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee updated successfully!");
-        console.log("Updated trustee in DB:", currentTrustee);
       } else {
         const { error } = await supabase.from("board_of_trustees").insert({
           name: currentTrustee.name,
@@ -172,17 +164,14 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee added successfully!");
-        console.log("Added new trustee to DB:", currentTrustee);
       }
       setIsDialogOpen(false);
     } catch (error: any) {
-      console.error("Error saving trustee:", error);
       showError("Error saving trustee: " + error.message);
     } finally {
       setSaving(false);
-      console.log("Calling fetchTrustees after save...");
-      fetchTrustees();
-      queryClient.invalidateQueries({ queryKey: ["trustees"] });
+      fetchTrustees(); // Re-fetch to update the list
+      queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public query
     }
   };
 
@@ -205,7 +194,6 @@ const BoardOfTrusteesAdmin = () => {
 
         if (error) throw error;
         showSuccess("Trustee deleted successfully!");
-        console.log("Deleted trustee from DB with ID:", trusteeToDelete);
 
         if (trusteeData?.image_url) {
           const imagePath = trusteeData.image_url.split('trustee-images/')[1];
@@ -219,15 +207,13 @@ const BoardOfTrusteesAdmin = () => {
           }
         }
       } catch (error: any) {
-        console.error("Error deleting trustee:", error);
         showError("Error deleting trustee: " + error.message);
       } finally {
         setIsConfirmDeleteOpen(false);
         setTrusteeToDelete(null);
         setSaving(false);
-        console.log("Calling fetchTrustees after delete...");
-        fetchTrustees();
-        queryClient.invalidateQueries({ queryKey: ["trustees"] });
+        fetchTrustees(); // Re-fetch to update the list
+        queryClient.invalidateQueries({ queryKey: ["trustees"] }); // Invalidate public query
       }
     }
   };
@@ -246,7 +232,7 @@ const BoardOfTrusteesAdmin = () => {
       ) : trustees.length === 0 ? (
         <p className="text-center text-muted-foreground">No board of trustees members found. Click "Add New Trustee" to create one.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" key={JSON.stringify(trustees.map(t => t.id))}>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {trustees.map((trustee) => (
             <Card key={trustee.id}>
               {trustee.image_url && (

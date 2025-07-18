@@ -4,7 +4,7 @@ import { showError } from "@/utils/toast";
 import TrusteeCard from "@/components/TrusteeCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query"; // Import useQuery
+import { useQuery } from "@tanstack/react-query";
 
 interface Trustee {
   id: string;
@@ -34,7 +34,7 @@ const BoardOfTrustees = () => {
     queryKey: ["trustees"],
     queryFn: fetchTrustees,
     staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
-    refetchOnWindowFocus: false, // Prevent refetching on window focus for static content
+    refetchOnWindowFocus: false,
   });
 
   if (error) {
