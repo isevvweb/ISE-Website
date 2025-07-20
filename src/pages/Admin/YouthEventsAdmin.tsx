@@ -14,6 +14,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { v4 as uuidv4 } from 'uuid';
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+
 
 interface EventImage {
   url: string;
@@ -27,6 +36,7 @@ interface PastYouthEvent {
   event_date: string; // ISO date string
   images: EventImage[];
   display_order: number;
+  tag: string; // New: Tag for the event
   created_at?: string;
 }
 
@@ -35,13 +45,15 @@ const YouthEventsAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Partial<PastYouthEvent> | null>(null);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteDeleteOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const programTags = ["Education", "Recreation", "Service"]; // Define available tags
 
   useEffect(() => {
     fetchEvents();
@@ -70,6 +82,7 @@ const YouthEventsAdmin = () => {
       event_date: format(new Date(), "yyyy-MM-dd"),
       images: [],
       display_order: events.length > 0 ? Math.max(...events.map(e => e.display_order || 0)) + 1 : 1,
+      tag: "", // Initialize new tag field
     });
     setSelectedFiles([]);
     setIsDialogOpen(true);
@@ -83,7 +96,7 @@ const YouthEventsAdmin = () => {
 
   const handleDeleteClick = (id: string) => {
     setEventToDelete(id);
-    setIsConfirmDeleteOpen(true);
+    setIsConfirmDeleteDeleteOpen(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +156,8 @@ const YouthEventsAdmin = () => {
   };
 
   const handleSaveEvent = async () => {
-    if (!currentEvent?.title || !currentEvent?.event_date) {
-      showError("Title and Event Date are required.");
+    if (!currentEvent?.title || !currentEvent?.event_date || !currentEvent?.tag) {
+      showError("Title, Event Date, and Tag are required.");
       return;
     }
 
@@ -171,6 +184,7 @@ const YouthEventsAdmin = () => {
             event_date: currentEvent.event_date,
             images: combinedImages,
             display_order: currentEvent.display_order,
+            tag: currentEvent.tag, // Save the new tag
           })
           .eq("id", currentEvent.id);
 
@@ -184,6 +198,7 @@ const YouthEventsAdmin = () => {
           event_date: currentEvent.event_date,
           images: combinedImages,
           display_order: currentEvent.display_order,
+          tag: currentEvent.tag, // Save the new tag
         });
 
         if (error) throw error;
@@ -239,7 +254,7 @@ const YouthEventsAdmin = () => {
       } catch (error: any) {
         showError("Error deleting event: " + error.message);
       } finally {
-        setIsConfirmDeleteOpen(false);
+        setIsConfirmDeleteDeleteOpen(false);
         setEventToDelete(null);
         setSaving(false);
         fetchEvents(); // Re-fetch to update the list
@@ -263,17 +278,17 @@ const YouthEventsAdmin = () => {
         <p className="text-center text-muted-foreground">No past youth events found. Click "Add New Event" to create one.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event) => (
+          {events.map((event: PastYouthEvent) => ( {/* Explicitly type event */}
             <Card key={event.id}>
-              {event.images && event.images.length > 0 && (
+              {event.images && event.images.length > 0 ? ( {/* Corrected conditional rendering */}
                 <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
                   <img
-                    src={event.images[0].url} // Display first image as thumbnail
-                    alt={event.images[0].caption || event.title}
+                    src={event.images[0]?.url || ""}
+                    alt={event.images[0]?.caption || event.title}
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-              )}
+              ) : null} {/* Added null for else case */}
               <CardHeader>
                 <CardTitle className="text-xl">{event.title}</CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
@@ -284,6 +299,7 @@ const YouthEventsAdmin = () => {
                 <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3">{event.description}</p>
                 <p className="text-sm text-muted-foreground">Images: {event.images?.length || 0}</p>
                 <p className="text-sm text-muted-foreground">Order: {event.display_order}</p>
+                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>} {/* Display the tag */}
                 <div className="flex justify-end gap-2 mt-4">
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(event)}>
                     <Edit className="h-4 w-4" />
@@ -364,6 +380,26 @@ const YouthEventsAdmin = () => {
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tag" className="text-right">
+                Program Tag
+              </Label>
+              <Select
+                value={currentEvent?.tag || ""}
+                onValueChange={(value) => setCurrentEvent({ ...currentEvent, tag: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  {programTags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="display_order" className="text-right">
@@ -449,7 +485,7 @@ const YouthEventsAdmin = () => {
       </Dialog>
 
       {/* Confirm Delete Dialog */}
-      <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
+      <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteDeleteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
@@ -458,7 +494,7 @@ const YouthEventsAdmin = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsConfirmDeleteDeleteOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={confirmDelete} disabled={saving}>
               {saving ? (
                 <>

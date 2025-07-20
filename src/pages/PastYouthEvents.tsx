@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 interface EventImage {
   url: string;
@@ -25,6 +26,7 @@ interface PastYouthEvent {
   event_date: string; // ISO date string
   images: EventImage[];
   display_order: number;
+  tag: string; // New: Tag for the event
   created_at?: string;
 }
 
@@ -77,19 +79,20 @@ const PastYouthEvents = () => {
         <p className="text-center text-muted-foreground">No past youth events found at this time.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
+          {events.map((event: PastYouthEvent) => ( {/* Explicitly type event */}
             <Card key={event.id} className="flex flex-col p-6">
               <CardHeader className="p-0 mb-4">
                 <CardTitle className="text-2xl font-bold">{event.title}</CardTitle>
                 <CardDescription className="text-muted-foreground">
                   {format(parseISO(event.event_date), "PPP")}
                 </CardDescription>
+                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>} {/* Display the tag */}
               </CardHeader>
               <CardContent className="p-0 text-gray-700 dark:text-gray-300 mb-4 flex-grow">
                 <p>{event.description}</p>
               </CardContent>
 
-              {event.images && event.images.length > 0 && (
+              {event.images && event.images.length > 0 ? ( {/* Corrected conditional rendering */}
                 <div className="mb-4 mt-auto">
                   {event.images.length === 1 ? (
                     <div className="w-full h-48 object-cover rounded-md overflow-hidden">
@@ -117,7 +120,7 @@ const PastYouthEvents = () => {
                     </Carousel>
                   )}
                 </div>
-              )}
+              ) : null} {/* Added null for else case */}
             </Card>
           ))}
         </div>
