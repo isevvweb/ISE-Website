@@ -8,9 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp } from "lucide-react"; // Import Chevron icons
 import { showSuccess, showError } from "@/utils/toast";
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"; // Import Collapsible components
 
 const Members = () => {
   const [membershipForm, setMembershipForm] = React.useState({
@@ -23,6 +28,7 @@ const Members = () => {
     paymentPreference: "",
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isFormOpen, setIsFormOpen] = React.useState(false); // State to manage form visibility
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -75,6 +81,7 @@ const Members = () => {
         whatsappPhone: "",
         paymentPreference: "",
       });
+      setIsFormOpen(false); // Close the form after successful submission
     } catch (error: any) {
       showError("Error sending application: " + error.message);
     } finally {
@@ -118,125 +125,146 @@ const Members = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Your email"
-                  value={membershipForm.email}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+            <Collapsible
+              open={isFormOpen}
+              onOpenChange={setIsFormOpen}
+              className="w-full space-y-4"
+            >
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  {isFormOpen ? (
+                    <>
+                      Hide Application Form <ChevronUp className="ml-2 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Show Application Form <ChevronDown className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Your email"
+                      value={membershipForm.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
 
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="agreement">
-                  I bear witness that there is no deity worthy of worship except Allah سبحانَهُ و تعالى , the One True God, and Mohammad صلى الله عليه وسلم is His final messenger. By applying for membership to the Islamic Society of Evansville, I agree to abide by its constitution & bylaws and I agree to fulfill my financial obligations in the form of membership dues. <span className="text-red-500">*</span>
-                </Label>
-                <div className="flex items-center space-x-2 mt-2">
-                  <Checkbox
-                    id="agreement"
-                    checked={membershipForm.agreement}
-                    onCheckedChange={handleCheckboxChange}
-                    required
-                  />
-                  <label
-                    htmlFor="agreement"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I agree
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Your answer"
-                  value={membershipForm.fullName}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="familyMembers">Names of all family members and children's ages <span className="text-red-500">*</span></Label>
-                <Textarea
-                  id="familyMembers"
-                  placeholder="Your answer"
-                  value={membershipForm.familyMembers}
-                  onChange={handleInputChange}
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="mailingAddress">Mailing Address <span className="text-red-500">*</span></Label>
-                <Textarea
-                  id="mailingAddress"
-                  placeholder="Your answer"
-                  value={membershipForm.mailingAddress}
-                  onChange={handleInputChange}
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2 text-left">
-                <Label htmlFor="whatsappPhone">Phone number for WhatsApp announcements <span className="text-red-500">*</span></Label>
-                <Input
-                  id="whatsappPhone"
-                  type="tel"
-                  placeholder="Your answer"
-                  value={membershipForm.whatsappPhone}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div className="grid gap-2 text-left">
-                <Label>Payment preference <span className="text-red-500">*</span></Label>
-                <Card className="p-4 mt-2">
-                  <CardDescription className="mb-4">
-                    Although it is not required to submit information for automatic monthly bank draft of the membership fees, this is the easiest, most secure option, and standard practice among the majority of our members. Dues are payable via cash, check, or automatic bank draft. We welcome your suggestions so please feel free to contact us with questions and/or concerns.
-                  </CardDescription>
-                  <RadioGroup
-                    value={membershipForm.paymentPreference}
-                    onValueChange={handleRadioChange}
-                    className="space-y-2"
-                    required
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="monthly_cash_check" id="monthly_cash_check" />
-                      <Label htmlFor="monthly_cash_check">I would like to pay monthly via cash/check.</Label>
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="agreement">
+                      I bear witness that there is no deity worthy of worship except Allah سبحانَهُ و تعالى , the One True God, and Mohammad صلى الله عليه وسلم is His final messenger. By applying for membership to the Islamic Society of Evansville, I agree to abide by its constitution & bylaws and I agree to fulfill my financial obligations in the form of membership dues. <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Checkbox
+                        id="agreement"
+                        checked={membershipForm.agreement}
+                        onCheckedChange={handleCheckboxChange}
+                        required
+                      />
+                      <label
+                        htmlFor="agreement"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        I agree
+                      </label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="automatic_payments" id="automatic_payments" />
-                      <Label htmlFor="automatic_payments">I would like to enroll in automatic payments.</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="annual_lump_sum" id="annual_lump_sum" />
-                      <Label htmlFor="annual_lump_sum">I would like to pay my monthly dues in one annual lump sum.</Label>
-                    </div>
-                  </RadioGroup>
-                </Card>
-              </div>
+                  </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
-                  </>
-                ) : (
-                  "Submit Application"
-                )}
-              </Button>
-            </form>
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Your answer"
+                      value={membershipForm.fullName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="familyMembers">Names of all family members and children's ages <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      id="familyMembers"
+                      placeholder="Your answer"
+                      value={membershipForm.familyMembers}
+                      onChange={handleInputChange}
+                      rows={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="mailingAddress">Mailing Address <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      id="mailingAddress"
+                      placeholder="Your answer"
+                      value={membershipForm.mailingAddress}
+                      onChange={handleInputChange}
+                      rows={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-2 text-left">
+                    <Label htmlFor="whatsappPhone">Phone number for WhatsApp announcements <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="whatsappPhone"
+                      type="tel"
+                      placeholder="Your answer"
+                      value={membershipForm.whatsappPhone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid gap-2 text-left">
+                    <Label>Payment preference <span className="text-red-500">*</span></Label>
+                    <Card className="p-4 mt-2">
+                      <CardDescription className="mb-4">
+                        Although it is not required to submit information for automatic monthly bank draft of the membership fees, this is the easiest, most secure option, and standard practice among the majority of our members. Dues are payable via cash, check, or automatic bank draft. We welcome your suggestions so please feel free to contact us with questions and/or concerns.
+                      </CardDescription>
+                      <RadioGroup
+                        value={membershipForm.paymentPreference}
+                        onValueChange={handleRadioChange}
+                        className="space-y-2"
+                        required
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="monthly_cash_check" id="monthly_cash_check" />
+                          <Label htmlFor="monthly_cash_check">I would like to pay monthly via cash/check.</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="automatic_payments" id="automatic_payments" />
+                          <Label htmlFor="automatic_payments">I would like to enroll in automatic payments.</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="annual_lump_sum" id="annual_lump_sum" />
+                          <Label htmlFor="annual_lump_sum">I would like to pay my monthly dues in one annual lump sum.</Label>
+                        </div>
+                      </RadioGroup>
+                    </Card>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
+                      </>
+                    ) : (
+                      "Submit Application"
+                    )}
+                  </Button>
+                </form>
+              </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
       </section>
