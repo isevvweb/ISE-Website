@@ -21,7 +21,7 @@ const Header = () => {
     { name: "Live Stream", path: "/live-stream" },
     { name: "Youth Activities", path: "/youth-activities" },
     { name: "Announcements", path: "/announcements" },
-    { name: "Annual Reports", path: "/annual-reports" },
+    // { name: "Annual Reports", path: "/annual-reports" }, // Removed from main navigation
     { name: "About", path: "/about" },
     { name: "Members", path: "/members" },
     { name: "Contact", path: "/contact" },
@@ -31,8 +31,8 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="mr-4 flex items-center flex-shrink-0"> {/* Added flex-shrink-0 */}
-          <span className="font-bold text-lg whitespace-nowrap">Islamic Society of Evansville</span> {/* Added whitespace-nowrap */}
+        <Link to="/" className="mr-4 flex items-center flex-shrink-0">
+          <span className="font-bold text-lg whitespace-nowrap">Islamic Society of Evansville</span>
         </Link>
 
         {/* Desktop Navigation */}

@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Separator } from "@/components/ui/separator"; // Import Separator
 
 const Members = () => {
   return (
@@ -44,6 +45,8 @@ const Members = () => {
         </Card>
       </section>
 
+      <Separator className="my-12" /> {/* Added separator */}
+
       <section className="mb-12 text-center">
         <h2 className="text-2xl font-bold mb-6">Community Events Calendar</h2>
         <Card className="max-w-2xl mx-auto p-6">
@@ -63,6 +66,22 @@ const Members = () => {
                 title="Community Events Calendar"
               ></iframe>
             </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Separator className="my-12" /> {/* Added separator */}
+
+      <section className="mb-12 text-center">
+        <h2 className="text-2xl font-bold mb-6">Annual Reports</h2>
+        <Card className="max-w-2xl mx-auto p-6">
+          <CardContent className="text-gray-700 dark:text-gray-300">
+            <p className="mb-4">
+              As a member, you can review our annual reports to stay informed about the mosque's financial health and activities.
+            </p>
+            <Button asChild className="w-full md:w-auto">
+              <Link to="/annual-reports">View Annual Reports</Link>
+            </Button>
           </CardContent>
         </Card>
       </section>
