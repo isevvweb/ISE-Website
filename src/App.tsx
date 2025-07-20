@@ -9,7 +9,10 @@ import NotFound from "./pages/NotFound";
 import PrayerTimes from "./pages/PrayerTimes";
 import LiveStream from "./pages/LiveStream";
 import YouthActivities from "./pages/YouthActivities";
-import PastYouthEvents from "./pages/PastYouthEvents"; // New import
+import PastYouthEvents from "./pages/PastYouthEvents";
+import WeeklyYouthHalaqa from "@/pages/YouthActivities/WeeklyYouthHalaqa.tsx"; // Changed to use alias
+import SportsRecreation from "@/pages/YouthActivities/SportsRecreation.tsx"; // Changed to use alias
+import CommunityServiceProjects from "@/pages/YouthActivities/CommunityServiceProjects.tsx"; // Changed to use alias
 import Announcements from "./pages/Announcements";
 import About from "./pages/About";
 import Members from "./pages/Members";
@@ -27,7 +30,7 @@ import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx";
 import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
 import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
-import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx"; // New import
+import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +46,10 @@ const App = () => (
           <Route path="/prayer-times" element={<PrayerTimes />} />
           <Route path="/live-stream" element={<LiveStream />} />
           <Route path="/youth-activities" element={<YouthActivities />} />
-          <Route path="/youth-activities/past-events" element={<PastYouthEvents />} /> {/* New public route */}
+          <Route path="/youth-activities/past-events" element={<PastYouthEvents />} />
+          <Route path="/youth-activities/halaqa" element={<WeeklyYouthHalaqa />} />
+          <Route path="/youth-activities/sports" element={<SportsRecreation />} />
+          <Route path="/youth-activities/community-service" element={<CommunityServiceProjects />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/about" element={<About />} />
           <Route path="/members" element={<Members />} />
@@ -64,7 +70,7 @@ const App = () => (
           <Route path="leadership" element={<LeadershipAdmin />} />
           <Route path="board-members" element={<BoardMembersAdmin />} />
           <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
-          <Route path="youth-events" element={<YouthEventsAdmin />} /> {/* New admin route */}
+          <Route path="youth-events" element={<YouthEventsAdmin />} />
         </Route>
 
         {/* Catch-all route */}

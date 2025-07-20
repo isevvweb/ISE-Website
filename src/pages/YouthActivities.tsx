@@ -3,22 +3,29 @@ import YouthTeamMemberCard from "@/components/YouthTeamMemberCard";
 import SchoolingOptionCard from "@/components/SchoolingOptionCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button"; // Import Button
-import { Link } from "react-router-dom"; // Import Link
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge"; // Import Badge
 
 const YouthActivities = () => {
   const youthPrograms = [
     {
       title: "Weekly Youth Halaqa",
       description: "Engage in insightful discussions about Islamic teachings every Saturday after Dhuhr prayer.",
+      tag: "Education",
+      path: "/youth-activities/halaqa",
     },
     {
       title: "Sports & Recreation",
       description: "Join us for basketball, soccer, and other fun activities to stay active and build brotherhood/sisterhood.",
+      tag: "Recreation",
+      path: "/youth-activities/sports",
     },
     {
       title: "Community Service Projects",
       description: "Participate in local initiatives to give back to the community and embody Islamic values.",
+      tag: "Service",
+      path: "/youth-activities/community-service",
     },
   ];
 
@@ -90,19 +97,23 @@ const YouthActivities = () => {
             <div className="grid gap-4">
               {youthPrograms.map((program, index) => (
                 <Card key={index}>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">{program.title}</CardTitle>
+                    <Badge variant="secondary">{program.tag}</Badge>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{program.description}</p>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/youth-activities/past-events">More Info & Past Events</Link>
+                      <Link to={program.path}>More Info</Link>
                     </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
             <div className="mt-6 text-center">
+              <Button asChild className="mb-4">
+                <Link to="/youth-activities/past-events">View Past Events & Galleries</Link>
+              </Button>
               <p className="text-gray-600 dark:text-gray-400">
                 Follow us on social media for more updates:
               </p>
