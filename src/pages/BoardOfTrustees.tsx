@@ -18,18 +18,22 @@ interface Trustee {
 }
 
 const fetchTrustees = async (): Promise<Trustee[]> => {
+  console.log("Fetching public trustees...");
   const { data, error } = await supabase
     .from("board_of_trustees")
     .select("*")
     .order("display_order", { ascending: true });
 
   if (error) {
+    console.error("Error in fetchTrustees:", error.message);
     throw new Error("Error fetching board of trustees: " + error.message);
   }
+  console.log("Public trustees fetched:", data);
   return data || [];
 };
 
 const BoardOfTrustees = () => {
+  console.log("BoardOfTrustees component rendered.");
   const { data: trustees, isLoading, error } = useQuery<Trustee[], Error>({
     queryKey: ["trustees"],
     queryFn: fetchTrustees,

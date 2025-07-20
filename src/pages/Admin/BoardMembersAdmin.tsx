@@ -23,6 +23,7 @@ interface BoardMember {
 }
 
 const BoardMembersAdmin = () => {
+  console.log("BoardMembersAdmin component rendered.");
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -41,15 +42,18 @@ const BoardMembersAdmin = () => {
 
   const fetchBoardMembers = async () => {
     setLoading(true);
+    console.log("Fetching admin board members...");
     const { data, error } = await supabase
       .from("board_members")
       .select("*")
       .order("display_order", { ascending: true });
 
     if (error) {
+      console.error("Error in fetchBoardMembers (Admin):", error.message);
       showError("Error fetching board members: " + error.message);
       setBoardMembers([]);
     } else {
+      console.log("Admin board members fetched:", data);
       setBoardMembers(data || []);
     }
     setLoading(false);
@@ -95,6 +99,7 @@ const BoardMembersAdmin = () => {
     const fileExtension = selectedFile.name.split('.').pop();
     const filePath = `board-member-images/${uuidv4()}.${fileExtension}`;
 
+    console.log("Uploading image to Supabase Storage:", filePath);
     const { data, error } = await supabase.storage
       .from('board-member-images')
       .upload(filePath, selectedFile, {
@@ -105,6 +110,7 @@ const BoardMembersAdmin = () => {
     setUploadingImage(false);
 
     if (error) {
+      console.error("Error uploading image:", error.message);
       showError("Error uploading image: " + error.message);
       return null;
     }
@@ -113,6 +119,7 @@ const BoardMembersAdmin = () => {
       .from('board-member-images')
       .getPublicUrl(filePath);
 
+    console.log("Image uploaded, public URL:", publicUrlData.publicUrl);
     return publicUrlData.publicUrl;
   };
 
@@ -136,6 +143,7 @@ const BoardMembersAdmin = () => {
       }
 
       if (currentMember.id) {
+        console.log("Updating board member:", currentMember.id);
         const { error } = await supabase
           .from("board_members")
           .update({
@@ -152,6 +160,7 @@ const BoardMembersAdmin = () => {
         if (error) throw error;
         showSuccess("Board member updated successfully!");
       } else {
+        console.log("Adding new board member.");
         const { error } = await supabase.from("board_members").insert({
           name: currentMember.name,
           role: currentMember.role,
@@ -167,6 +176,7 @@ const BoardMembersAdmin = () => {
       }
       setIsDialogOpen(false);
     } catch (error: any) {
+      console.error("Error saving board member:", error.message);
       showError("Error saving board member: " + error.message);
     } finally {
       setSaving(false);
@@ -179,6 +189,7 @@ const BoardMembersAdmin = () => {
     if (memberToDelete) {
       setSaving(true);
       try {
+        console.log("Fetching board member for image deletion:", memberToDelete);
         const { data: memberData, error: fetchError } = await supabase
           .from("board_members")
           .select("image_url")
@@ -187,6 +198,7 @@ const BoardMembersAdmin = () => {
 
         if (fetchError) throw fetchError;
 
+        console.log("Deleting board member:", memberToDelete);
         const { error } = await supabase
           .from("board_members")
           .delete()
@@ -198,6 +210,7 @@ const BoardMembersAdmin = () => {
         if (memberData?.image_url) {
           const imagePath = memberData.image_url.split('board-member-images/')[1];
           if (imagePath) {
+            console.log("Deleting image from storage:", imagePath);
             const { error: storageError } = await supabase.storage
               .from('board-member-images')
               .remove([imagePath]);
@@ -207,6 +220,7 @@ const BoardMembersAdmin = () => {
           }
         }
       } catch (error: any) {
+        console.error("Error deleting board member:", error.message);
         showError("Error deleting board member: " + error.message);
       } finally {
         setIsConfirmDeleteOpen(false);

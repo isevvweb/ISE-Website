@@ -18,18 +18,22 @@ interface BoardMember {
 }
 
 const fetchBoardMembers = async (): Promise<BoardMember[]> => {
+  console.log("Fetching public board members...");
   const { data, error } = await supabase
     .from("board_members")
     .select("*")
     .order("display_order", { ascending: true });
 
   if (error) {
+    console.error("Error in fetchBoardMembers:", error.message);
     throw new Error("Error fetching board members: " + error.message);
   }
+  console.log("Public board members fetched:", data);
   return data || [];
 };
 
 const BoardMembers = () => {
+  console.log("BoardMembers component rendered.");
   const { data: boardMembers, isLoading, error } = useQuery<BoardMember[], Error>({
     queryKey: ["boardMembers"],
     queryFn: fetchBoardMembers,

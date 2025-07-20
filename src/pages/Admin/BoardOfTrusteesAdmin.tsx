@@ -23,6 +23,7 @@ interface Trustee {
 }
 
 const BoardOfTrusteesAdmin = () => {
+  console.log("BoardOfTrusteesAdmin component rendered.");
   const [trustees, setTrustees] = useState<Trustee[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -41,15 +42,18 @@ const BoardOfTrusteesAdmin = () => {
 
   const fetchTrustees = async () => {
     setLoading(true);
+    console.log("Fetching admin trustees...");
     const { data, error } = await supabase
       .from("board_of_trustees")
       .select("*")
       .order("display_order", { ascending: true });
 
     if (error) {
+      console.error("Error in fetchTrustees (Admin):", error.message);
       showError("Error fetching board of trustees: " + error.message);
       setTrustees([]);
     } else {
+      console.log("Admin trustees fetched:", data);
       setTrustees(data || []);
     }
     setLoading(false);
@@ -95,6 +99,7 @@ const BoardOfTrusteesAdmin = () => {
     const fileExtension = selectedFile.name.split('.').pop();
     const filePath = `trustee-images/${uuidv4()}.${fileExtension}`;
 
+    console.log("Uploading image to Supabase Storage:", filePath);
     const { data, error } = await supabase.storage
       .from('trustee-images')
       .upload(filePath, selectedFile, {
@@ -105,6 +110,7 @@ const BoardOfTrusteesAdmin = () => {
     setUploadingImage(false);
 
     if (error) {
+      console.error("Error uploading image:", error.message);
       showError("Error uploading image: " + error.message);
       return null;
     }
@@ -113,6 +119,7 @@ const BoardOfTrusteesAdmin = () => {
       .from('trustee-images')
       .getPublicUrl(filePath);
 
+    console.log("Image uploaded, public URL:", publicUrlData.publicUrl);
     return publicUrlData.publicUrl;
   };
 
@@ -136,6 +143,7 @@ const BoardOfTrusteesAdmin = () => {
       }
 
       if (currentTrustee.id) {
+        console.log("Updating trustee:", currentTrustee.id);
         const { error } = await supabase
           .from("board_of_trustees")
           .update({
@@ -152,6 +160,7 @@ const BoardOfTrusteesAdmin = () => {
         if (error) throw error;
         showSuccess("Trustee updated successfully!");
       } else {
+        console.log("Adding new trustee.");
         const { error } = await supabase.from("board_of_trustees").insert({
           name: currentTrustee.name,
           role: currentTrustee.role,
@@ -167,6 +176,7 @@ const BoardOfTrusteesAdmin = () => {
       }
       setIsDialogOpen(false);
     } catch (error: any) {
+      console.error("Error saving trustee:", error.message);
       showError("Error saving trustee: " + error.message);
     } finally {
       setSaving(false);
@@ -179,6 +189,7 @@ const BoardOfTrusteesAdmin = () => {
     if (trusteeToDelete) {
       setSaving(true);
       try {
+        console.log("Fetching trustee for image deletion:", trusteeToDelete);
         const { data: trusteeData, error: fetchError } = await supabase
           .from("board_of_trustees")
           .select("image_url")
@@ -187,6 +198,7 @@ const BoardOfTrusteesAdmin = () => {
 
         if (fetchError) throw fetchError;
 
+        console.log("Deleting trustee:", trusteeToDelete);
         const { error } = await supabase
           .from("board_of_trustees")
           .delete()
@@ -198,6 +210,7 @@ const BoardOfTrusteesAdmin = () => {
         if (trusteeData?.image_url) {
           const imagePath = trusteeData.image_url.split('trustee-images/')[1];
           if (imagePath) {
+            console.log("Deleting image from storage:", imagePath);
             const { error: storageError } = await supabase.storage
               .from('trustee-images')
               .remove([imagePath]);
@@ -207,6 +220,7 @@ const BoardOfTrusteesAdmin = () => {
           }
         }
       } catch (error: any) {
+        console.error("Error deleting trustee:", error.message);
         showError("Error deleting trustee: " + error.message);
       } finally {
         setIsConfirmDeleteOpen(false);
