@@ -50,6 +50,18 @@ serve(async (req) => {
         Preferred Language: ${data.language || 'Not specified'}
       `;
       replyToEmail = data.email; // Set reply-to to the sender's email
+    } else if (formType === "membershipApplication") {
+      emailSubject = "New Membership Application";
+      emailBody = `
+        Email: ${data.email}
+        Agreement: ${data.agreement ? 'Agreed' : 'Not Agreed'}
+        Full Name: ${data.fullName}
+        Family Members & Children's Ages: ${data.familyMembers}
+        Mailing Address: ${data.mailingAddress}
+        Phone for WhatsApp: ${data.whatsappPhone}
+        Payment Preference: ${data.paymentPreference}
+      `;
+      replyToEmail = data.email;
     } else {
       console.warn("Invalid form type received:", formType);
       return new Response(JSON.stringify({ error: "Invalid form type" }), {
