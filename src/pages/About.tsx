@@ -37,7 +37,7 @@ const About = () => {
             <p className="mb-6">
               You can view our past annual reports to understand our progress and impact.
             </p>
-            <Link to="/admin/reports" className="text-blue-600 hover:underline font-medium">
+            <Link to="/annual-reports" className="text-blue-600 hover:underline font-medium"> {/* Updated link */}
               View Annual Reports
             </Link>
           </CardContent>

@@ -14,15 +14,16 @@ import About from "./pages/About";
 import Members from "./pages/Members";
 import Contact from "./pages/Contact";
 import Donate from "./pages/Donate";
-import BoardMembers from "./pages/BoardMembers"; // Re-import
-import BoardOfTrustees from "./pages/BoardOfTrustees"; // Re-import
+import AnnualReports from "./pages/AnnualReports"; // New import
+import BoardMembers from "./pages/BoardMembers";
+import BoardOfTrustees from "./pages/BoardOfTrustees";
 import AdminLayout from "@/pages/Admin/AdminLayout.tsx";
 import AdminDashboard from "@/pages/Admin/AdminDashboard.tsx";
 import AnnouncementsAdmin from "@/pages/Admin/AnnouncementsAdmin.tsx";
 import IqamahAdmin from "@/pages/Admin/IqamahAdmin.tsx";
 import AnnualReportsAdmin from "@/pages/Admin/AnnualReportsAdmin.tsx";
-import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx"; // Re-import
-import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx"; // Re-import
+import BoardMembersAdmin from "@/pages/Admin/BoardMembersAdmin.tsx";
+import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
 import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/members/trustees" element={<BoardOfTrustees />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/donate" element={<Donate />} />
+          <Route path="/annual-reports" element={<AnnualReports />} /> {/* New public route */}
         </Route>
 
         {/* Admin Routes (now public) */}

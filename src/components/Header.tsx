@@ -21,6 +21,7 @@ const Header = () => {
     { name: "Live Stream", path: "/live-stream" },
     { name: "Youth Activities", path: "/youth-activities" },
     { name: "Announcements", path: "/announcements" },
+    { name: "Annual Reports", path: "/annual-reports" },
     { name: "About", path: "/about" },
     { name: "Members", path: "/members" },
     { name: "Contact", path: "/contact" },
