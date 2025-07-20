@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Bell, Clock, FileText, Users, DollarSign } from "lucide-react";
+import { Home, Bell, Clock, FileText, Users, DollarSign, CalendarCheck } from "lucide-react"; // Import CalendarCheck icon
 
 const AdminLayout = () => {
   const adminNavItems = [
@@ -11,6 +11,7 @@ const AdminLayout = () => {
     { name: "Annual Reports", path: "/admin/reports", icon: FileText },
     { name: "Leadership", path: "/admin/leadership", icon: Users },
     { name: "Donation Causes", path: "/admin/donation-causes", icon: DollarSign },
+    { name: "Youth Events", path: "/admin/youth-events", icon: CalendarCheck }, // New nav item
   ];
 
   return (

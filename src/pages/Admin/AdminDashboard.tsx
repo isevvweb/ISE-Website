@@ -1,15 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Clock, FileText, Users, DollarSign } from "lucide-react"; // Removed Gavel icon as it's now within LeadershipAdmin
+import { Bell, Clock, FileText, Users, DollarSign, CalendarCheck } from "lucide-react"; // Import CalendarCheck icon
 
 const AdminDashboard = () => {
   const adminSections = [
     { title: "Announcements", description: "Manage mosque announcements.", path: "/admin/announcements", icon: Bell },
     { title: "Iqamah Times", description: "Adjust daily Iqamah times.", path: "/admin/iqamah", icon: Clock },
     { title: "Annual Reports", description: "Upload and manage annual reports.", path: "/admin/reports", icon: FileText },
-    { title: "Leadership", description: "Manage Board Members and Trustees.", path: "/admin/leadership", icon: Users }, // Consolidated section
+    { title: "Leadership", description: "Manage Board Members and Trustees.", path: "/admin/leadership", icon: Users },
     { title: "Donation Causes", description: "Add or remove donation causes.", path: "/admin/donation-causes", icon: DollarSign },
+    { title: "Youth Events", description: "Manage past youth events and galleries.", path: "/admin/youth-events", icon: CalendarCheck }, // New section
   ];
 
   return (

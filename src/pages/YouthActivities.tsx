@@ -3,6 +3,8 @@ import YouthTeamMemberCard from "@/components/YouthTeamMemberCard";
 import SchoolingOptionCard from "@/components/SchoolingOptionCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button"; // Import Button
+import { Link } from "react-router-dom"; // Import Link
 
 const YouthActivities = () => {
   const youthPrograms = [
@@ -92,7 +94,10 @@ const YouthActivities = () => {
                     <CardTitle className="text-lg">{program.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{program.description}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">{program.description}</p>
+                    <Button asChild variant="outline" size="sm">
+                      <Link to="/youth-activities/past-events">More Info & Past Events</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
