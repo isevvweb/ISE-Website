@@ -21,7 +21,6 @@ const Header = () => {
     { name: "Live Stream", path: "/live-stream" },
     { name: "Youth Activities", path: "/youth-activities" },
     { name: "Announcements", path: "/announcements" },
-    // { name: "Annual Reports", path: "/annual-reports" }, // Removed from main navigation
     { name: "About", path: "/about" },
     { name: "Members", path: "/members" },
     { name: "Contact", path: "/contact" },
@@ -64,10 +63,7 @@ const Header = () => {
             <Info className="h-5 w-5" />
           </Button>
 
-          {/* Admin Link (replaces auth button) */}
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin">Admin</Link>
-          </Button>
+          {/* Admin Link was here, now removed */}
 
           {/* Mobile Navigation */}
           <Sheet>
@@ -87,13 +83,7 @@ const Header = () => {
                     {route.name}
                   </Link>
                 ))}
-                {/* Admin Link for mobile */}
-                <Link
-                  to="/admin"
-                  className="text-lg font-medium hover:text-primary"
-                >
-                  Admin
-                </Link>
+                {/* Admin Link for mobile was here, now removed */}
               </nav>
             </SheetContent>
           </Sheet>

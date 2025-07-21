@@ -26,14 +26,11 @@ export const CreatorInfoDialog: React.FC<CreatorInfoDialogProps> = ({ isOpen, on
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <span className="text-right font-medium">Creator:</span>
-            <span className="col-span-3">Abdul-Aleem Mohammed</span>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <span className="text-right font-medium">Email:</span>
-            <a href="mailto:abaleemmohammed@gmail.com" className="col-span-3 text-blue-600 hover:underline">
-              abaleemmohammed@gmail.com
+            <a href="https://abaleemmo.github.io/" target="_blank" rel="noopener noreferrer" className="col-span-3 text-blue-600 hover:underline">
+              Abdul-Aleem Mohammed
             </a>
           </div>
+          {/* Creator's Email removed */}
           <div className="grid grid-cols-4 items-center gap-4">
             <span className="text-right font-medium">Portfolio:</span>
             <a href="https://abaleemmo.github.io/" target="_blank" rel="noopener noreferrer" className="col-span-3 text-blue-600 hover:underline">
