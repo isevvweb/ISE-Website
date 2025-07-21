@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route, Outlet, Navigate } from "react-router-dom"; // Import Navigate
 import Header from "./components/Header";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -31,9 +31,26 @@ import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
 import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
-import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx"; // New import
+import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
+import Login from "./pages/Login"; // Import the new Login page
+import { useSession } from "./components/SessionContextProvider"; // Import useSession
 
 const queryClient = new QueryClient();
+
+// PrivateRoute component to protect routes
+const PrivateRoute = () => {
+  const { session, isLoading } = useSession();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    ); // Or a loading spinner
+  }
+
+  return session ? <Outlet /> : <Navigate to="/login" replace />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -61,18 +78,23 @@ const App = () => (
           <Route path="/annual-reports" element={<AnnualReports />} />
         </Route>
 
-        {/* Admin Routes (now public) */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="announcements" element={<AnnouncementsAdmin />} />
-          <Route path="iqamah" element={<IqamahAdmin />} />
-          <Route path="reports" element={<AnnualReportsAdmin />} />
-          <Route path="donation-causes" element={<DonationCausesAdmin />} />
-          <Route path="leadership" element={<LeadershipAdmin />} />
-          <Route path="board-members" element={<BoardMembersAdmin />} />
-          <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
-          <Route path="youth-events" element={<YouthEventsAdmin />} />
-          <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} /> {/* New admin route */}
+        {/* Login Route */}
+        <Route path="/login" element={<Login />} />
+
+        {/* Admin Routes (Protected) */}
+        <Route path="/admin" element={<PrivateRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="announcements" element={<AnnouncementsAdmin />} />
+            <Route path="iqamah" element={<IqamahAdmin />} />
+            <Route path="reports" element={<AnnualReportsAdmin />} />
+            <Route path="donation-causes" element={<DonationCausesAdmin />} />
+            <Route path="leadership" element={<LeadershipAdmin />} />
+            <Route path="board-members" element={<BoardMembersAdmin />} />
+            <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
+            <Route path="youth-events" element={<YouthEventsAdmin />} />
+            <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
+          </Route>
         </Route>
 
         {/* Catch-all route */}
