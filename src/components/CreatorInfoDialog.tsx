@@ -31,12 +31,7 @@ export const CreatorInfoDialog: React.FC<CreatorInfoDialogProps> = ({ isOpen, on
             </a>
           </div>
           {/* Creator's Email removed */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <span className="text-right font-medium">Portfolio:</span>
-            <a href="https://abaleemmo.github.io/" target="_blank" rel="noopener noreferrer" className="col-span-3 text-blue-600 hover:underline">
-              abaleemmo.github.io
-            </a>
-          </div>
+          {/* Portfolio section removed */}
           <div className="grid grid-cols-4 items-center gap-4">
             <span className="text-right font-medium">Admin Page:</span>
             <Link to="/admin" className="col-span-3 text-blue-600 hover:underline" onClick={() => onOpenChange(false)}>
