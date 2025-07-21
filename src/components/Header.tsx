@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CreatorInfoDialog } from "@/components/CreatorInfoDialog";
+import { ThemeToggle } from "@/components/ThemeToggle"; // Import ThemeToggle
 
 const Header = () => {
   const [isCreatorInfoOpen, setIsCreatorInfoOpen] = React.useState(false);
@@ -53,6 +54,9 @@ const Header = () => {
             <Search className="h-5 w-5" />
           </Button>
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Info Icon */}
           <Button
             variant="ghost"
@@ -62,8 +66,6 @@ const Header = () => {
           >
             <Info className="h-5 w-5" />
           </Button>
-
-          {/* Admin Link was here, now removed */}
 
           {/* Mobile Navigation */}
           <Sheet>
@@ -83,7 +85,6 @@ const Header = () => {
                     {route.name}
                   </Link>
                 ))}
-                {/* Admin Link for mobile was here, now removed */}
               </nav>
             </SheetContent>
           </Sheet>

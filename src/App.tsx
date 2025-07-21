@@ -2,7 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Outlet } from "react-router-dom"; // Removed Navigate
+import { Routes, Route, Outlet } from "react-router-dom";
+import { ThemeProvider } from "next-themes"; // Import ThemeProvider
+
 import Header from "./components/Header";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -32,55 +34,55 @@ import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
-// Removed Login import
-// Removed useSession import
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        {/* Public Routes with Header */}
-        <Route element={<div className="flex flex-col min-h-screen"><Header /><main className="flex-grow"><Outlet /></main></div>}>
-          <Route path="/" element={<Index />} />
-          <Route path="/prayer-times" element={<PrayerTimes />} />
-          <Route path="/live-stream" element={<LiveStream />} />
-          <Route path="/youth-activities" element={<YouthActivities />} />
-          <Route path="/youth-activities/past-events" element={<PastYouthEvents />} />
-          <Route path="/youth-activities/halaqa" element={<WeeklyYouthHalaqa />} />
-          <Route path="/youth-activities/sports" element={<SportsRecreation />} />
-          <Route path="/youth-activities/community-service" element={<CommunityServiceProjects />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/members/board" element={<BoardMembers />} />
-          <Route path="/members/trustees" element={<BoardOfTrustees />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/donate" element={<Donate />} />
-          <Route path="/annual-reports" element={<AnnualReports />} />
-        </Route>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem> {/* Added ThemeProvider */}
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <Routes>
+          {/* Public Routes with Header */}
+          <Route element={<div className="flex flex-col min-h-screen"><Header /><main className="flex-grow"><Outlet /></main></div>}>
+            <Route path="/" element={<Index />} />
+            <Route path="/prayer-times" element={<PrayerTimes />} />
+            <Route path="/live-stream" element={<LiveStream />} />
+            <Route path="/youth-activities" element={<YouthActivities />} />
+            <Route path="/youth-activities/past-events" element={<PastYouthEvents />} />
+            <Route path="/youth-activities/halaqa" element={<WeeklyYouthHalaqa />} />
+            <Route path="/youth-activities/sports" element={<SportsRecreation />} />
+            <Route path="/youth-activities/community-service" element={<CommunityServiceProjects />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/members/board" element={<BoardMembers />} />
+            <Route path="/members/trustees" element={<BoardOfTrustees />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/donate" element={<Donate />} />
+            <Route path="/annual-reports" element={<AnnualReports />} />
+          </Route>
 
-        {/* Admin Routes (Publicly Accessible) */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="announcements" element={<AnnouncementsAdmin />} />
-          <Route path="iqamah" element={<IqamahAdmin />} />
-          <Route path="reports" element={<AnnualReportsAdmin />} />
-          <Route path="donation-causes" element={<DonationCausesAdmin />} />
-          <Route path="leadership" element={<LeadershipAdmin />} />
-          <Route path="board-members" element={<BoardMembersAdmin />} />
-          <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
-          <Route path="youth-events" element={<YouthEventsAdmin />} />
-          <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
-        </Route>
+          {/* Admin Routes (Publicly Accessible) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="announcements" element={<AnnouncementsAdmin />} />
+            <Route path="iqamah" element={<IqamahAdmin />} />
+            <Route path="reports" element={<AnnualReportsAdmin />} />
+            <Route path="donation-causes" element={<DonationCausesAdmin />} />
+            <Route path="leadership" element={<LeadershipAdmin />} />
+            <Route path="board-members" element={<BoardMembersAdmin />} />
+            <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
+            <Route path="youth-events" element={<YouthEventsAdmin />} />
+            <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
+          </Route>
 
-        {/* Catch-all route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
+          {/* Catch-all route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TooltipProvider>
+    </ThemeProvider> {/* Closing ThemeProvider */}
   </QueryClientProvider>
 );
 
