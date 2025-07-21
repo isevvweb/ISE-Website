@@ -203,7 +203,9 @@ const PrayerTimes = () => {
                   {prayerOrder.map((prayer) => (
                     <TableRow key={prayer}>
                       <TableCell className="font-medium">{prayer}</TableCell>
-                      <TableCell>{data.apiTimes.data.timings[prayer as keyof typeof data.apiTimes.data.timings]}</TableCell>
+                      <TableCell>
+                        {formatTimeForDisplay(data.apiTimes.data.timings[prayer as keyof typeof data.apiTimes.data.timings])}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatTimeForDisplay(data.iqamahTimes[prayer] || "N/A")}
                       </TableCell>
