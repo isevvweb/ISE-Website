@@ -10,9 +10,9 @@ import PrayerTimes from "./pages/PrayerTimes";
 import LiveStream from "./pages/LiveStream";
 import YouthActivities from "./pages/YouthActivities";
 import PastYouthEvents from "./pages/PastYouthEvents";
-import WeeklyYouthHalaqa from "@/pages/YouthActivities/WeeklyYouthHalaqa.tsx"; // Changed to use alias
-import SportsRecreation from "@/pages/YouthActivities/SportsRecreation.tsx"; // Changed to use alias
-import CommunityServiceProjects from "@/pages/YouthActivities/CommunityServiceProjects.tsx"; // Changed to use alias
+import WeeklyYouthHalaqa from "@/pages/YouthActivities/WeeklyYouthHalaqa.tsx";
+import SportsRecreation from "@/pages/YouthActivities/SportsRecreation.tsx";
+import CommunityServiceProjects from "@/pages/YouthActivities/CommunityServiceProjects.tsx";
 import Announcements from "./pages/Announcements";
 import About from "./pages/About";
 import Members from "./pages/Members";
@@ -31,6 +31,7 @@ import BoardOfTrusteesAdmin from "@/pages/Admin/BoardOfTrusteesAdmin.tsx";
 import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
+import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx"; // New import
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
           <Route path="board-members" element={<BoardMembersAdmin />} />
           <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
           <Route path="youth-events" element={<YouthEventsAdmin />} />
+          <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} /> {/* New admin route */}
         </Route>
 
         {/* Catch-all route */}
