@@ -3,32 +3,61 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
-import { DollarSign, Handshake, BookOpen, Home } from "lucide-react";
+import { DollarSign, Handshake, BookOpen, Home, Heart, Gift, PiggyBank, GraduationCap, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { showError } from "@/utils/toast";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface DonationCause {
+  id: string;
+  title: string;
+  description?: string;
+  icon_name?: string;
+  payment_link: string;
+  display_order?: number;
+}
+
+// Map of Lucide icon names to their components
+const lucideIcons: { [key: string]: React.ElementType } = {
+  DollarSign,
+  Handshake,
+  BookOpen,
+  Home,
+  Heart,
+  Gift,
+  PiggyBank,
+  GraduationCap,
+};
+
+const fetchDonationCauses = async (): Promise<DonationCause[]> => {
+  const { data, error } = await supabase
+    .from("donation_causes")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    throw new Error("Error fetching donation causes: " + error.message);
+  }
+  return data || [];
+};
 
 const Donate = () => {
-  const donationCauses = [
-    {
-      id: "1",
-      title: "General Fund",
-      description: "Support the daily operations, maintenance, and general expenses of the mosque.",
-      icon: Home,
-      link: "#", // Placeholder link
-    },
-    {
-      id: "2",
-      title: "Zakat & Sadaqah",
-      description: "Fulfill your religious obligations and help those in need within our community and beyond.",
-      icon: Handshake,
-      link: "#", // Placeholder link
-    },
-    {
-      id: "3",
-      title: "Education & Youth Programs",
-      description: "Invest in the future by supporting our Saturday/Sunday schools and youth activities.",
-      icon: BookOpen,
-      link: "#", // Placeholder link
-    },
-  ];
+  const { data: donationCauses, isLoading, error } = useQuery<DonationCause[], Error>({
+    queryKey: ["donationCauses"],
+    queryFn: fetchDonationCauses,
+    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  if (error) {
+    showError("Error loading donation causes: " + error.message);
+    return (
+      <div className="container mx-auto p-4 text-center text-red-500">
+        <p>Error loading donation causes. Please try again later.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
@@ -55,26 +84,45 @@ const Donate = () => {
 
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-6 text-center">Choose a Donation Cause</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {donationCauses.map((cause) => (
-            <Card key={cause.id} className="flex flex-col items-center text-center p-6">
-              <div className="mb-4">
-                <cause.icon className="h-12 w-12 text-primary" />
-              </div>
-              <CardHeader className="p-0 mb-2">
-                <CardTitle className="text-xl font-semibold">{cause.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0 text-sm text-gray-700 dark:text-gray-300 mb-4 flex-grow">
-                <p>{cause.description}</p>
-              </CardContent>
-              <Button asChild className="w-full mt-auto">
-                <a href={cause.link} target="_blank" rel="noopener noreferrer">
-                  Donate Now
-                </a>
-              </Button>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="flex flex-col items-center text-center p-6">
+                <Skeleton className="h-12 w-12 rounded-full mb-4" />
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-20 w-full mb-4" />
+                <Skeleton className="h-10 w-full" />
+              </Card>
+            ))}
+          </div>
+        ) : donationCauses && donationCauses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {donationCauses.map((cause) => {
+              const IconComponent = cause.icon_name ? lucideIcons[cause.icon_name] : DollarSign; // Default to DollarSign if icon_name is missing
+              return (
+                <Card key={cause.id} className="flex flex-col items-center text-center p-6">
+                  <div className="mb-4">
+                    {IconComponent && <IconComponent className="h-12 w-12 text-primary" />}
+                  </div>
+                  <CardHeader className="p-0 mb-2">
+                    <CardTitle className="text-xl font-semibold">{cause.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 text-sm text-gray-700 dark:text-gray-300 mb-4 flex-grow">
+                    <p>{cause.description}</p>
+                  </CardContent>
+                  <Button asChild className="w-full mt-auto">
+                    <a href={cause.payment_link} target="_blank" rel="noopener noreferrer">
+                      Donate Now
+                    </a>
+                  </Button>
+                </Card>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground">No donation causes found at this time. Please check back later!</p>
+        )}
       </section>
 
       <Separator className="my-12" />
