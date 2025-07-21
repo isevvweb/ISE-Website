@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { Info, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +11,21 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CreatorInfoDialog } from "@/components/CreatorInfoDialog";
-import { ThemeToggle } from "@/components/ThemeToggle"; // Import ThemeToggle
+import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"; // Import Dialog components
+import { Input } from "@/components/ui/input"; // Import Input
 
 const Header = () => {
   const [isCreatorInfoOpen, setIsCreatorInfoOpen] = React.useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = React.useState(false); // State for search dialog
+  const [searchQuery, setSearchQuery] = React.useState(""); // State for search input
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const publicRoutes = [
     { name: "Home", path: "/" },
@@ -27,6 +38,15 @@ const Header = () => {
     { name: "Contact", path: "/contact" },
     { name: "Donate", path: "/donate" },
   ];
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchDialogOpen(false); // Close dialog after search
+      setSearchQuery(""); // Clear search query
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -49,8 +69,13 @@ const Header = () => {
         </NavigationMenu>
 
         <div className="flex items-center space-x-2">
-          {/* Search Icon (placeholder) */}
-          <Button variant="ghost" size="icon" aria-label="Search">
+          {/* Search Icon */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Search"
+            onClick={() => setIsSearchDialogOpen(true)} // Open search dialog
+          >
             <Search className="h-5 w-5" />
           </Button>
 
@@ -91,6 +116,28 @@ const Header = () => {
         </div>
       </div>
       <CreatorInfoDialog isOpen={isCreatorInfoOpen} onOpenChange={setIsCreatorInfoOpen} />
+
+      {/* Search Dialog */}
+      <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Search Website</DialogTitle>
+            <DialogDescription>
+              Enter keywords to find information across the site.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSearchSubmit} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="e.g., announcements, youth programs"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-grow"
+            />
+            <Button type="submit">Search</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };

@@ -34,12 +34,13 @@ import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
+import Search from "./pages/Search"; // Import the new Search page
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem> {/* Added ThemeProvider */}
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/donate" element={<Donate />} />
             <Route path="/annual-reports" element={<AnnualReports />} />
+            <Route path="/search" element={<Search />} /> {/* New Search Route */}
           </Route>
 
           {/* Admin Routes (Publicly Accessible) */}
@@ -82,7 +84,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>
-    </ThemeProvider> {/* Closing ThemeProvider */}
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
