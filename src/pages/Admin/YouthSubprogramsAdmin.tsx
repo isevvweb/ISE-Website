@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { format, parse } from "date-fns"; // Import parse
 
 interface YouthSubprogram {
@@ -33,27 +32,30 @@ interface YouthSubprogram {
   created_at?: string;
 }
 
-// Helper function to format 24-hour time to 12-hour with AM/PM
-const formatTimeForDisplay = (time24h: string | undefined): string => {
-  if (!time24h || time24h === "N/A") return "N/A";
+const prayerNames = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
+const timeInputTypes = ["Specific Time", "Prayer Name"];
 
-  // Check if it looks like a time string (HH:MM)
+// Helper function to format 24-hour time to 12-hour with AM/PM or return prayer name
+const formatTimeForDisplay = (timeValue: string | undefined): string => {
+  if (!timeValue) return "N/A"; // Handle null/undefined/empty string
+
+  if (prayerNames.includes(timeValue)) {
+    return timeValue; // It's a prayer name, return as is
+  }
+
+  // Otherwise, assume it's a 24-hour time string
   const timeRegex = /^\d{2}:\d{2}$/;
-  if (timeRegex.test(time24h)) {
+  if (timeRegex.test(timeValue)) {
     try {
-      // Parse the time string. We need a reference date, but only the time part matters.
-      const parsedTime = parse(time24h, 'HH:mm', new Date());
-      // Check if parsing was successful and it's a valid date
+      const parsedTime = parse(timeValue, 'HH:mm', new Date());
       if (!isNaN(parsedTime.getTime())) {
-        return format(parsedTime, 'hh:mm a'); // Format to 12-hour with AM/PM
+        return format(parsedTime, 'hh:mm a');
       }
     } catch (e) {
-      // Fallback if parsing fails
-      console.warn("Failed to parse time:", time24h, e);
+      console.warn("Failed to parse time:", timeValue, e);
     }
   }
-  // If not a valid time string or parsing failed, return original
-  return time24h;
+  return timeValue; // Fallback if not a valid time string
 };
 
 const YouthSubprogramsAdmin = () => {
@@ -67,6 +69,12 @@ const YouthSubprogramsAdmin = () => {
   const queryClient = useQueryClient();
 
   const programTags = ["Education", "Recreation", "Service"]; // Corresponds to the main youth program categories
+
+  // State for the dialog form's time inputs
+  const [dialogStartTimeType, setDialogStartTimeType] = useState<'specific' | 'prayer_name'>('specific');
+  const [dialogStartTimeValue, setDialogStartTimeValue] = useState<string>(''); // HH:MM or prayer name
+  const [dialogEndTimeType, setDialogEndTimeType] = useState<'specific' | 'prayer_name'>('specific');
+  const [dialogEndTimeValue, setDialogEndTimeValue] = useState<string>(''); // HH:MM or prayer name
 
   const fetchSubprograms = useCallback(async () => {
     setLoading(true);
@@ -94,37 +102,44 @@ const YouthSubprogramsAdmin = () => {
       title: "",
       description: "",
       day_of_week: "",
-      start_time: "",
-      end_time: "",
       contact_email: "",
       contact_phone: "",
       display_order: subprograms.length > 0 ? Math.max(...subprograms.map(s => s.display_order || 0)) + 1 : 1,
     });
+    setDialogStartTimeType('specific');
+    setDialogStartTimeValue('');
+    setDialogEndTimeType('specific');
+    setDialogEndTimeValue('');
     setIsDialogOpen(true);
   }, [subprograms]);
 
   const handleEditClick = useCallback((subprogram: YouthSubprogram) => {
     setCurrentSubprogram({ ...subprogram });
+
+    // Determine start time type and value
+    if (subprogram.start_time && prayerNames.includes(subprogram.start_time)) {
+      setDialogStartTimeType('prayer_name');
+      setDialogStartTimeValue(subprogram.start_time);
+    } else {
+      setDialogStartTimeType('specific');
+      setDialogStartTimeValue(subprogram.start_time || '');
+    }
+
+    // Determine end time type and value
+    if (subprogram.end_time && prayerNames.includes(subprogram.end_time)) {
+      setDialogEndTimeType('prayer_name');
+      setDialogEndTimeValue(subprogram.end_time);
+    } else {
+      setDialogEndTimeType('specific');
+      setDialogEndTimeValue(subprogram.end_time || '');
+    }
+
     setIsDialogOpen(true);
-  }, []);
+  }, [prayerNames]);
 
   const handleDeleteClick = useCallback((id: string) => {
     setSubprogramToDelete(id);
     setIsConfirmDeleteOpen(true);
-  }, []);
-
-  const handleChange = useCallback((field: keyof YouthSubprogram, value: string) => {
-    setCurrentSubprogram((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  const handleNACheckboxChange = useCallback((field: keyof YouthSubprogram, checked: boolean) => {
-    setCurrentSubprogram((prev) => ({
-      ...prev,
-      [field]: checked ? "N/A" : "",
-    }));
   }, []);
 
   const handleSaveSubprogram = useCallback(async () => {
@@ -140,21 +155,21 @@ const YouthSubprogramsAdmin = () => {
         title: currentSubprogram.title,
         description: currentSubprogram.description,
         day_of_week: currentSubprogram.day_of_week,
-        start_time: currentSubprogram.start_time === "" ? null : currentSubprogram.start_time,
-        end_time: currentSubprogram.end_time === "" ? null : currentSubprogram.end_time,
+        start_time: dialogStartTimeType === 'specific' ? (dialogStartTimeValue || null) : dialogStartTimeValue,
+        end_time: dialogEndTimeType === 'specific' ? (dialogEndTimeValue || null) : dialogEndTimeValue,
         contact_email: currentSubprogram.contact_email,
         contact_phone: currentSubprogram.contact_phone,
         display_order: currentSubprogram.display_order,
       };
 
-      // Basic time format validation if not N/A and not empty
+      // Validation for specific time format
       const timeRegex = /^\d{2}:\d{2}$/;
-      if (payload.start_time && payload.start_time !== "N/A" && !timeRegex.test(payload.start_time)) {
+      if (dialogStartTimeType === 'specific' && payload.start_time && payload.start_time !== "N/A" && !timeRegex.test(payload.start_time)) {
         showError("Please enter Start Time in HH:MM (24-hour) format.");
         setSaving(false);
         return;
       }
-      if (payload.end_time && payload.end_time !== "N/A" && !timeRegex.test(payload.end_time)) {
+      if (dialogEndTimeType === 'specific' && payload.end_time && payload.end_time !== "N/A" && !timeRegex.test(payload.end_time)) {
         showError("Please enter End Time in HH:MM (24-hour) format.");
         setSaving(false);
         return;
@@ -184,7 +199,7 @@ const YouthSubprogramsAdmin = () => {
       fetchSubprograms(); // Re-fetch to update the list
       queryClient.invalidateQueries({ queryKey: ["youthSubprograms"] }); // Invalidate public query
     }
-  }, [currentSubprogram, fetchSubprograms, queryClient]);
+  }, [currentSubprogram, dialogStartTimeType, dialogStartTimeValue, dialogEndTimeType, dialogEndTimeValue, fetchSubprograms, queryClient]);
 
   const confirmDelete = useCallback(async () => {
     if (subprogramToDelete) {
@@ -294,7 +309,7 @@ const YouthSubprogramsAdmin = () => {
               <Input
                 id="title"
                 value={currentSubprogram?.title || ""}
-                onChange={(e) => handleChange("title", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, title: e.target.value })}
                 className="col-span-3"
                 required
               />
@@ -306,7 +321,7 @@ const YouthSubprogramsAdmin = () => {
               <Textarea
                 id="description"
                 value={currentSubprogram?.description || ""}
-                onChange={(e) => handleChange("description", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, description: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -317,69 +332,126 @@ const YouthSubprogramsAdmin = () => {
               <Input
                 id="day_of_week"
                 value={currentSubprogram?.day_of_week || ""}
-                onChange={(e) => handleChange("day_of_week", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, day_of_week: e.target.value })}
                 className="col-span-3"
                 placeholder="e.g., Every Saturday, Every other Tuesday"
               />
             </div>
+
+            {/* Start Time Selector */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="start_time" className="text-right">
-                Start Time
-              </Label>
-              <div className="col-span-2 flex items-center gap-2">
-                <Input
-                  id="start_time"
-                  type="time"
-                  className="flex-grow"
-                  value={currentSubprogram?.start_time === "N/A" ? "" : currentSubprogram?.start_time || ""}
-                  onChange={(e) => handleChange("start_time", e.target.value)}
-                  disabled={currentSubprogram?.start_time === "N/A"}
-                  placeholder="HH:MM (24-hour)"
-                />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="start_time-na"
-                    checked={currentSubprogram?.start_time === "N/A"}
-                    onCheckedChange={(checked) => handleNACheckboxChange("start_time", !!checked)}
-                  />
-                  <Label htmlFor="start_time-na" className="text-sm font-normal">
-                    N/A
-                  </Label>
-                </div>
-              </div>
-              <span className="text-sm text-muted-foreground min-w-[80px] text-right">
-                {formatTimeForDisplay(currentSubprogram?.start_time)}
-              </span>
+              <Label htmlFor="start_time_type" className="text-right">Start Time Type</Label>
+              <Select
+                value={dialogStartTimeType}
+                onValueChange={(value: 'specific' | 'prayer_name') => {
+                  setDialogStartTimeType(value);
+                  setDialogStartTimeValue(''); // Clear value when type changes
+                }}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select time type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeInputTypes.map((type) => (
+                    <SelectItem key={type} value={type === "Specific Time" ? "specific" : "prayer_name"}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="end_time" className="text-right">
-                End Time
-              </Label>
-              <div className="col-span-2 flex items-center gap-2">
-                <Input
-                  id="end_time"
-                  type="time"
-                  className="flex-grow"
-                  value={currentSubprogram?.end_time === "N/A" ? "" : currentSubprogram?.end_time || ""}
-                  onChange={(e) => handleChange("end_time", e.target.value)}
-                  disabled={currentSubprogram?.end_time === "N/A"}
-                  placeholder="HH:MM (24-hour)"
-                />
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="end_time-na"
-                    checked={currentSubprogram?.end_time === "N/A"}
-                    onCheckedChange={(checked) => handleNACheckboxChange("end_time", !!checked)}
+              <Label htmlFor="start_time_value" className="text-right">Start Time</Label>
+              {dialogStartTimeType === 'specific' ? (
+                <div className="col-span-3 flex items-center gap-2">
+                  <Input
+                    id="start_time_value"
+                    type="time"
+                    className="flex-grow"
+                    value={dialogStartTimeValue}
+                    onChange={(e) => setDialogStartTimeValue(e.target.value)}
+                    placeholder="HH:MM (24-hour)"
                   />
-                  <Label htmlFor="end_time-na" className="text-sm font-normal">
-                    N/A
-                  </Label>
+                  <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                    {formatTimeForDisplay(dialogStartTimeValue)}
+                  </span>
                 </div>
-              </div>
-              <span className="text-sm text-muted-foreground min-w-[80px] text-right">
-                {formatTimeForDisplay(currentSubprogram?.end_time)}
-              </span>
+              ) : (
+                <Select
+                  value={dialogStartTimeValue}
+                  onValueChange={setDialogStartTimeValue}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select prayer time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prayerNames.map((prayer) => (
+                      <SelectItem key={prayer} value={prayer}>
+                        {prayer}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
+
+            {/* End Time Selector */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="end_time_type" className="text-right">End Time Type</Label>
+              <Select
+                value={dialogEndTimeType}
+                onValueChange={(value: 'specific' | 'prayer_name') => {
+                  setDialogEndTimeType(value);
+                  setDialogEndTimeValue(''); // Clear value when type changes
+                }}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select time type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeInputTypes.map((type) => (
+                    <SelectItem key={type} value={type === "Specific Time" ? "specific" : "prayer_name"}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="end_time_value" className="text-right">End Time</Label>
+              {dialogEndTimeType === 'specific' ? (
+                <div className="col-span-3 flex items-center gap-2">
+                  <Input
+                    id="end_time_value"
+                    type="time"
+                    className="flex-grow"
+                    value={dialogEndTimeValue}
+                    onChange={(e) => setDialogEndTimeValue(e.target.value)}
+                    placeholder="HH:MM (24-hour)"
+                  />
+                  <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                    {formatTimeForDisplay(dialogEndTimeValue)}
+                  </span>
+                </div>
+              ) : (
+                <Select
+                  value={dialogEndTimeValue}
+                  onValueChange={setDialogEndTimeValue}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select prayer time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prayerNames.map((prayer) => (
+                      <SelectItem key={prayer} value={prayer}>
+                        {prayer}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="contact_email" className="text-right">
                 Contact Email
@@ -388,7 +460,7 @@ const YouthSubprogramsAdmin = () => {
                 id="contact_email"
                 type="email"
                 value={currentSubprogram?.contact_email || ""}
-                onChange={(e) => handleChange("contact_email", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, contact_email: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -400,7 +472,7 @@ const YouthSubprogramsAdmin = () => {
                 id="contact_phone"
                 type="tel"
                 value={currentSubprogram?.contact_phone || ""}
-                onChange={(e) => handleChange("contact_phone", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, contact_phone: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -412,7 +484,7 @@ const YouthSubprogramsAdmin = () => {
                 id="display_order"
                 type="number"
                 value={currentSubprogram?.display_order || ""}
-                onChange={(e) => handleChange("display_order", e.target.value)}
+                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, display_order: parseInt(e.target.value) || 0 })}
                 className="col-span-3"
               />
             </div>
