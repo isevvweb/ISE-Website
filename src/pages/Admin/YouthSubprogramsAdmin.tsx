@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { format, parse } from "date-fns"; // Import parse
 
 interface YouthSubprogram {
   id: string;
@@ -23,28 +25,36 @@ interface YouthSubprogram {
   title: string;
   description?: string;
   day_of_week?: string;
-  start_time?: string; // Changed from time_interval
-  end_time?: string;   // New field
+  start_time?: string;
+  end_time?: string;
   contact_email?: string;
   contact_phone?: string;
   display_order?: number;
   created_at?: string;
 }
 
-// Helper to generate time options in 15-minute increments
-const generateTimeOptions = () => {
-  const times = [];
-  for (let h = 0; h < 24; h++) {
-    for (let m = 0; m < 60; m += 15) {
-      const hour = h.toString().padStart(2, '0');
-      const minute = m.toString().padStart(2, '0');
-      times.push(`${hour}:${minute}`);
+// Helper function to format 24-hour time to 12-hour with AM/PM
+const formatTimeForDisplay = (time24h: string | undefined): string => {
+  if (!time24h || time24h === "N/A") return "N/A";
+
+  // Check if it looks like a time string (HH:MM)
+  const timeRegex = /^\d{2}:\d{2}$/;
+  if (timeRegex.test(time24h)) {
+    try {
+      // Parse the time string. We need a reference date, but only the time part matters.
+      const parsedTime = parse(time24h, 'HH:mm', new Date());
+      // Check if parsing was successful and it's a valid date
+      if (!isNaN(parsedTime.getTime())) {
+        return format(parsedTime, 'hh:mm a'); // Format to 12-hour with AM/PM
+      }
+    } catch (e) {
+      // Fallback if parsing fails
+      console.warn("Failed to parse time:", time24h, e);
     }
   }
-  return times;
+  // If not a valid time string or parsing failed, return original
+  return time24h;
 };
-
-const timeOptions = generateTimeOptions();
 
 const YouthSubprogramsAdmin = () => {
   const [subprograms, setSubprograms] = useState<YouthSubprogram[]>([]);
@@ -58,11 +68,7 @@ const YouthSubprogramsAdmin = () => {
 
   const programTags = ["Education", "Recreation", "Service"]; // Corresponds to the main youth program categories
 
-  useEffect(() => {
-    fetchSubprograms();
-  }, []);
-
-  const fetchSubprograms = async () => {
+  const fetchSubprograms = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("youth_subprograms")
@@ -76,34 +82,52 @@ const YouthSubprogramsAdmin = () => {
       setSubprograms(data || []);
     }
     setLoading(false);
-  };
+  }, []);
 
-  const handleAddClick = () => {
+  useEffect(() => {
+    fetchSubprograms();
+  }, [fetchSubprograms]);
+
+  const handleAddClick = useCallback(() => {
     setCurrentSubprogram({
       program_tag: "", // Must be selected
       title: "",
       description: "",
       day_of_week: "",
-      start_time: "", // Initialize new fields
-      end_time: "",   // Initialize new fields
+      start_time: "",
+      end_time: "",
       contact_email: "",
       contact_phone: "",
       display_order: subprograms.length > 0 ? Math.max(...subprograms.map(s => s.display_order || 0)) + 1 : 1,
     });
     setIsDialogOpen(true);
-  };
+  }, [subprograms]);
 
-  const handleEditClick = (subprogram: YouthSubprogram) => {
+  const handleEditClick = useCallback((subprogram: YouthSubprogram) => {
     setCurrentSubprogram({ ...subprogram });
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = useCallback((id: string) => {
     setSubprogramToDelete(id);
     setIsConfirmDeleteOpen(true);
-  };
+  }, []);
 
-  const handleSaveSubprogram = async () => {
+  const handleChange = useCallback((field: keyof YouthSubprogram, value: string) => {
+    setCurrentSubprogram((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  const handleNACheckboxChange = useCallback((field: keyof YouthSubprogram, checked: boolean) => {
+    setCurrentSubprogram((prev) => ({
+      ...prev,
+      [field]: checked ? "N/A" : "",
+    }));
+  }, []);
+
+  const handleSaveSubprogram = useCallback(async () => {
     if (!currentSubprogram?.program_tag || !currentSubprogram?.title) {
       showError("Program Tag and Title are required.");
       return;
@@ -116,12 +140,25 @@ const YouthSubprogramsAdmin = () => {
         title: currentSubprogram.title,
         description: currentSubprogram.description,
         day_of_week: currentSubprogram.day_of_week,
-        start_time: currentSubprogram.start_time || null, // Use null for empty string
-        end_time: currentSubprogram.end_time || null,     // Use null for empty string
+        start_time: currentSubprogram.start_time === "" ? null : currentSubprogram.start_time,
+        end_time: currentSubprogram.end_time === "" ? null : currentSubprogram.end_time,
         contact_email: currentSubprogram.contact_email,
         contact_phone: currentSubprogram.contact_phone,
         display_order: currentSubprogram.display_order,
       };
+
+      // Basic time format validation if not N/A and not empty
+      const timeRegex = /^\d{2}:\d{2}$/;
+      if (payload.start_time && payload.start_time !== "N/A" && !timeRegex.test(payload.start_time)) {
+        showError("Please enter Start Time in HH:MM (24-hour) format.");
+        setSaving(false);
+        return;
+      }
+      if (payload.end_time && payload.end_time !== "N/A" && !timeRegex.test(payload.end_time)) {
+        showError("Please enter End Time in HH:MM (24-hour) format.");
+        setSaving(false);
+        return;
+      }
 
       if (currentSubprogram.id) {
         // Update existing subprogram
@@ -147,9 +184,9 @@ const YouthSubprogramsAdmin = () => {
       fetchSubprograms(); // Re-fetch to update the list
       queryClient.invalidateQueries({ queryKey: ["youthSubprograms"] }); // Invalidate public query
     }
-  };
+  }, [currentSubprogram, fetchSubprograms, queryClient]);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (subprogramToDelete) {
       setSaving(true);
       try {
@@ -170,7 +207,7 @@ const YouthSubprogramsAdmin = () => {
         queryClient.invalidateQueries({ queryKey: ["youthSubprograms"] }); // Invalidate public query
       }
     }
-  };
+  }, [subprogramToDelete, fetchSubprograms, queryClient]);
 
   return (
     <div className="p-4">
@@ -200,7 +237,7 @@ const YouthSubprogramsAdmin = () => {
                 {subprogram.day_of_week && <p className="text-sm text-muted-foreground">Day: {subprogram.day_of_week}</p>}
                 {(subprogram.start_time || subprogram.end_time) && (
                   <p className="text-sm text-muted-foreground">
-                    Time: {subprogram.start_time || "N/A"} - {subprogram.end_time || "N/A"}
+                    Time: {formatTimeForDisplay(subprogram.start_time)} - {formatTimeForDisplay(subprogram.end_time)}
                   </p>
                 )}
                 {subprogram.contact_email && <p className="text-sm text-muted-foreground">Email: {subprogram.contact_email}</p>}
@@ -257,7 +294,7 @@ const YouthSubprogramsAdmin = () => {
               <Input
                 id="title"
                 value={currentSubprogram?.title || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, title: e.target.value })}
+                onChange={(e) => handleChange("title", e.target.value)}
                 className="col-span-3"
                 required
               />
@@ -269,7 +306,7 @@ const YouthSubprogramsAdmin = () => {
               <Textarea
                 id="description"
                 value={currentSubprogram?.description || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, description: e.target.value })}
+                onChange={(e) => handleChange("description", e.target.value)}
                 className="col-span-3"
               />
             </div>
@@ -280,7 +317,7 @@ const YouthSubprogramsAdmin = () => {
               <Input
                 id="day_of_week"
                 value={currentSubprogram?.day_of_week || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, day_of_week: e.target.value })}
+                onChange={(e) => handleChange("day_of_week", e.target.value)}
                 className="col-span-3"
                 placeholder="e.g., Every Saturday, Every other Tuesday"
               />
@@ -289,41 +326,59 @@ const YouthSubprogramsAdmin = () => {
               <Label htmlFor="start_time" className="text-right">
                 Start Time
               </Label>
-              <Select
-                value={currentSubprogram?.start_time || ""}
-                onValueChange={(value) => setCurrentSubprogram({ ...currentSubprogram, start_time: value })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select start time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="col-span-2 flex items-center gap-2">
+                <Input
+                  id="start_time"
+                  type="time"
+                  className="flex-grow"
+                  value={currentSubprogram?.start_time === "N/A" ? "" : currentSubprogram?.start_time || ""}
+                  onChange={(e) => handleChange("start_time", e.target.value)}
+                  disabled={currentSubprogram?.start_time === "N/A"}
+                  placeholder="HH:MM (24-hour)"
+                />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="start_time-na"
+                    checked={currentSubprogram?.start_time === "N/A"}
+                    onCheckedChange={(checked) => handleNACheckboxChange("start_time", !!checked)}
+                  />
+                  <Label htmlFor="start_time-na" className="text-sm font-normal">
+                    N/A
+                  </Label>
+                </div>
+              </div>
+              <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                {formatTimeForDisplay(currentSubprogram?.start_time)}
+              </span>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="end_time" className="text-right">
                 End Time
               </Label>
-              <Select
-                value={currentSubprogram?.end_time || ""}
-                onValueChange={(value) => setCurrentSubprogram({ ...currentSubprogram, end_time: value })}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select end time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="col-span-2 flex items-center gap-2">
+                <Input
+                  id="end_time"
+                  type="time"
+                  className="flex-grow"
+                  value={currentSubprogram?.end_time === "N/A" ? "" : currentSubprogram?.end_time || ""}
+                  onChange={(e) => handleChange("end_time", e.target.value)}
+                  disabled={currentSubprogram?.end_time === "N/A"}
+                  placeholder="HH:MM (24-hour)"
+                />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="end_time-na"
+                    checked={currentSubprogram?.end_time === "N/A"}
+                    onCheckedChange={(checked) => handleNACheckboxChange("end_time", !!checked)}
+                  />
+                  <Label htmlFor="end_time-na" className="text-sm font-normal">
+                    N/A
+                  </Label>
+                </div>
+              </div>
+              <span className="text-sm text-muted-foreground min-w-[80px] text-right">
+                {formatTimeForDisplay(currentSubprogram?.end_time)}
+              </span>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="contact_email" className="text-right">
@@ -333,7 +388,7 @@ const YouthSubprogramsAdmin = () => {
                 id="contact_email"
                 type="email"
                 value={currentSubprogram?.contact_email || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, contact_email: e.target.value })}
+                onChange={(e) => handleChange("contact_email", e.target.value)}
                 className="col-span-3"
               />
             </div>
@@ -345,7 +400,7 @@ const YouthSubprogramsAdmin = () => {
                 id="contact_phone"
                 type="tel"
                 value={currentSubprogram?.contact_phone || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, contact_phone: e.target.value })}
+                onChange={(e) => handleChange("contact_phone", e.target.value)}
                 className="col-span-3"
               />
             </div>
@@ -357,7 +412,7 @@ const YouthSubprogramsAdmin = () => {
                 id="display_order"
                 type="number"
                 value={currentSubprogram?.display_order || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, display_order: parseInt(e.target.value) || 0 })}
+                onChange={(e) => handleChange("display_order", e.target.value)}
                 className="col-span-3"
               />
             </div>
