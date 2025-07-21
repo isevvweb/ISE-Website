@@ -2,10 +2,56 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { showError } from "@/utils/toast";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface YouthSubprogram {
+  id: string;
+  program_tag: string;
+  title: string;
+  description?: string;
+  day_of_week?: string;
+  time_interval?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  display_order?: number;
+  created_at?: string;
+}
+
+const fetchSubprogramsByTag = async (tag: string): Promise<YouthSubprogram[]> => {
+  const { data, error } = await supabase
+    .from("youth_subprograms")
+    .select("*")
+    .eq("program_tag", tag)
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    throw new Error(`Error fetching ${tag} subprograms: ` + error.message);
+  }
+  return data || [];
+};
 
 const CommunityServiceProjects = () => {
+  const { data: subprograms, isLoading, error } = useQuery<YouthSubprogram[], Error>({
+    queryKey: ["youthSubprograms", "Service"],
+    queryFn: () => fetchSubprogramsByTag("Service"),
+    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  if (error) {
+    showError("Error loading community service subprograms: " + error.message);
+    return (
+      <div className="container mx-auto p-4 text-center text-red-500">
+        <p>Error loading community service details. Please try again later.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4">
       <Button variant="outline" asChild className="mb-6">
@@ -26,15 +72,6 @@ const CommunityServiceProjects = () => {
               The Islamic Society of Evansville's Youth Community Service program is dedicated to instilling the values of compassion, generosity, and civic responsibility in our young generation. We believe that serving humanity is an integral part of our faith, as taught by the Quran and the Sunnah of Prophet Muhammad (peace be upon him).
             </p>
             <p className="mb-4">
-              Our youth regularly participate in various local initiatives, including:
-            </p>
-            <ul className="list-disc list-inside mb-4 space-y-1">
-              <li>Volunteering at local food banks and shelters</li>
-              <li>Participating in park clean-ups and environmental initiatives</li>
-              <li>Organizing donation drives for those in need</li>
-              <li>Visiting nursing homes and assisting the elderly</li>
-            </ul>
-            <p>
               These projects not only benefit the wider Evansville community but also provide our youth with invaluable experiences, teaching them the importance of empathy, teamwork, and active citizenship.
             </p>
           </CardContent>
@@ -44,36 +81,52 @@ const CommunityServiceProjects = () => {
       <Separator className="my-12" />
 
       <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">Get Involved</h2>
-        <Card className="p-6">
-          <CardContent className="text-gray-700 dark:text-gray-300">
-            <p className="mb-4">
-              We are always looking for enthusiastic youth to join our community service efforts. Participation is a rewarding way to earn good deeds and make a tangible difference.
-            </p>
-            <p className="mb-2">
-              Check our youth calendar for upcoming service opportunities.
-            </p>
-            <p>
-              If you have suggestions for new projects or would like to volunteer, please contact our Youth Director.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <Separator className="my-12" />
-
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6 text-center">Contact Information</h2>
-        <Card className="p-6">
-          <CardContent className="text-gray-700 dark:text-gray-300">
-            <p className="mb-2">
-              Email: <a href="mailto:imam.omar@example.com" className="text-blue-600 hover:underline">imam.omar@example.com</a>
-            </p>
-            <p>
-              Phone: <a href="tel:5551234567" className="text-blue-600 hover:underline">555-123-4567</a>
-            </p>
-          </CardContent>
-        </Card>
+        <h2 className="text-2xl font-bold mb-6 text-center">Projects & Opportunities</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <Card key={i} className="p-6">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-20 w-full mb-4" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-2/3 mt-2" />
+              </Card>
+            ))}
+          </div>
+        ) : subprograms && subprograms.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {subprograms.map((subprogram) => (
+              <Card key={subprogram.id} className="p-6">
+                <CardHeader className="p-0 mb-2">
+                  <CardTitle className="text-xl">{subprogram.title}</CardTitle>
+                  {subprogram.day_of_week && subprogram.time_interval && (
+                    <CardDescription className="text-muted-foreground">
+                      {subprogram.day_of_week}, {subprogram.time_interval}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="p-0 text-gray-700 dark:text-gray-300 mb-4">
+                  <p>{subprogram.description}</p>
+                </CardContent>
+                <div className="flex flex-col gap-2">
+                  {subprogram.contact_email && (
+                    <a href={`mailto:${subprogram.contact_email}`} className="flex items-center text-blue-600 hover:underline text-sm">
+                      <Mail className="h-4 w-4 mr-2" /> {subprogram.contact_email}
+                    </a>
+                  )}
+                  {subprogram.contact_phone && (
+                    <a href={`tel:${subprogram.contact_phone}`} className="flex items-center text-blue-600 hover:underline text-sm">
+                      <Phone className="h-4 w-4 mr-2" /> {subprogram.contact_phone}
+                    </a>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground">No specific community service projects found at this time. Please check back later!</p>
+        )}
       </section>
     </div>
   );
