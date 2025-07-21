@@ -1,19 +1,14 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Bell, Clock, FileText, Users, DollarSign, CalendarCheck, ListChecks, Menu } from "lucide-react";
+import { Home, Menu } from "lucide-react"; // Only need Home and Menu icons
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const AdminLayout = () => {
+  // Simplified admin navigation items for clarity and brevity
   const adminNavItems = [
     { name: "Dashboard", path: "/admin", icon: Home },
-    { name: "Announcements", path: "/admin/announcements", icon: Bell },
-    { name: "Iqamah Times", path: "/admin/iqamah", icon: Clock },
-    { name: "Annual Reports", path: "/admin/reports", icon: FileText },
-    { name: "Leadership", path: "/admin/leadership", icon: Users },
-    { name: "Donation Causes", path: "/admin/donation-causes", icon: DollarSign },
-    { name: "Youth Events", path: "/admin/youth-events", icon: CalendarCheck },
-    { name: "Youth Subprograms", path: "/admin/youth-subprograms", icon: ListChecks },
+    { name: "Back to Public Site", path: "/", icon: Home }, // Reusing Home icon for simplicity
   ];
 
   return (
@@ -26,14 +21,12 @@ const AdminLayout = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-4">
-            {adminNavItems.map((item) => (
-              <Button key={item.path} variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80">
-                <Link to={item.path} className="flex items-center gap-2">
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              </Button>
-            ))}
+            <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80">
+              <Link to="/admin" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Link>
+            </Button>
             <Button variant="secondary" asChild>
               <Link to="/">Back to Public Site</Link>
             </Button>
@@ -48,16 +41,13 @@ const AdminLayout = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[250px] sm:w-[300px]">
               <nav className="flex flex-col gap-4 pt-6">
-                {adminNavItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="flex items-center gap-2 text-lg font-medium hover:text-primary"
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </Link>
-                ))}
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-2 text-lg font-medium hover:text-primary"
+                >
+                  <Home className="h-5 w-5" />
+                  Dashboard
+                </Link>
                 <Link
                   to="/"
                   className="flex items-center gap-2 text-lg font-medium hover:text-primary mt-4 border-t pt-4"
