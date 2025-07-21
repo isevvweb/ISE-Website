@@ -79,20 +79,20 @@ const PastYouthEvents = () => {
         <p className="text-center text-muted-foreground">No past youth events found at this time.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event: PastYouthEvent) => ( {/* Explicitly type event */}
+          {events.map((event: PastYouthEvent) => (
             <Card key={event.id} className="flex flex-col p-6">
               <CardHeader className="p-0 mb-4">
                 <CardTitle className="text-2xl font-bold">{event.title}</CardTitle>
                 <CardDescription className="text-muted-foreground">
                   {format(parseISO(event.event_date), "PPP")}
                 </CardDescription>
-                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>} {/* Display the tag */}
+                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>}
               </CardHeader>
               <CardContent className="p-0 text-gray-700 dark:text-gray-300 mb-4 flex-grow">
                 <p>{event.description}</p>
               </CardContent>
 
-              {event.images && event.images.length > 0 ? ( {/* Corrected conditional rendering */}
+              {event.images && event.images.length > 0 ? (
                 <div className="mb-4 mt-auto">
                   {event.images.length === 1 ? (
                     <div className="w-full h-48 object-cover rounded-md overflow-hidden">
@@ -120,7 +120,7 @@ const PastYouthEvents = () => {
                     </Carousel>
                   )}
                 </div>
-              ) : null} {/* Added null for else case */}
+              ) : null}
             </Card>
           ))}
         </div>

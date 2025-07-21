@@ -45,7 +45,7 @@ const YouthEventsAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Partial<PastYouthEvent> | null>(null);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteDeleteOpen] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false); // Corrected state variable name
   const [eventToDelete, setEventToDelete] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -96,7 +96,7 @@ const YouthEventsAdmin = () => {
 
   const handleDeleteClick = (id: string) => {
     setEventToDelete(id);
-    setIsConfirmDeleteDeleteOpen(true);
+    setIsConfirmDeleteOpen(true);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,7 +254,7 @@ const YouthEventsAdmin = () => {
       } catch (error: any) {
         showError("Error deleting event: " + error.message);
       } finally {
-        setIsConfirmDeleteDeleteOpen(false);
+        setIsConfirmDeleteOpen(false);
         setEventToDelete(null);
         setSaving(false);
         fetchEvents(); // Re-fetch to update the list
@@ -278,9 +278,9 @@ const YouthEventsAdmin = () => {
         <p className="text-center text-muted-foreground">No past youth events found. Click "Add New Event" to create one.</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map((event: PastYouthEvent) => ( {/* Explicitly type event */}
+          {events.map((event: PastYouthEvent) => (
             <Card key={event.id}>
-              {event.images && event.images.length > 0 ? ( {/* Corrected conditional rendering */}
+              {event.images && event.images.length > 0 ? (
                 <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-t-lg overflow-hidden">
                   <img
                     src={event.images[0]?.url || ""}
@@ -288,7 +288,7 @@ const YouthEventsAdmin = () => {
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-              ) : null} {/* Added null for else case */}
+              ) : null}
               <CardHeader>
                 <CardTitle className="text-xl">{event.title}</CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
@@ -299,7 +299,7 @@ const YouthEventsAdmin = () => {
                 <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3">{event.description}</p>
                 <p className="text-sm text-muted-foreground">Images: {event.images?.length || 0}</p>
                 <p className="text-sm text-muted-foreground">Order: {event.display_order}</p>
-                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>} {/* Display the tag */}
+                {event.tag && <Badge variant="secondary" className="mt-2">{event.tag}</Badge>}
                 <div className="flex justify-end gap-2 mt-4">
                   <Button variant="outline" size="sm" onClick={() => handleEditClick(event)}>
                     <Edit className="h-4 w-4" />
@@ -485,7 +485,7 @@ const YouthEventsAdmin = () => {
       </Dialog>
 
       {/* Confirm Delete Dialog */}
-      <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteDeleteOpen}>
+      <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}> {/* Corrected state variable name */}
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
@@ -494,7 +494,7 @@ const YouthEventsAdmin = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDeleteDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={confirmDelete} disabled={saving}>
               {saving ? (
                 <>
