@@ -15,7 +15,8 @@ interface YouthSubprogram {
   title: string;
   description?: string;
   day_of_week?: string;
-  time_interval?: string;
+  start_time?: string; // Changed from time_interval
+  end_time?: string;   // New field
   contact_email?: string;
   contact_phone?: string;
   display_order?: number;
@@ -103,9 +104,9 @@ const WeeklyYouthHalaqa = () => {
               <Card key={subprogram.id} className="p-6">
                 <CardHeader className="p-0 mb-2">
                   <CardTitle className="text-xl">{subprogram.title}</CardTitle>
-                  {subprogram.day_of_week && subprogram.time_interval && (
+                  {subprogram.day_of_week && (subprogram.start_time || subprogram.end_time) && (
                     <CardDescription className="text-muted-foreground">
-                      {subprogram.day_of_week}, {subprogram.time_interval}
+                      {subprogram.day_of_week}, {subprogram.start_time || "N/A"} - {subprogram.end_time || "N/A"}
                     </CardDescription>
                   )}
                 </CardHeader>

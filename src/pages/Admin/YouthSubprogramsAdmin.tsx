@@ -23,12 +23,28 @@ interface YouthSubprogram {
   title: string;
   description?: string;
   day_of_week?: string;
-  time_interval?: string;
+  start_time?: string; // Changed from time_interval
+  end_time?: string;   // New field
   contact_email?: string;
   contact_phone?: string;
   display_order?: number;
   created_at?: string;
 }
+
+// Helper to generate time options in 15-minute increments
+const generateTimeOptions = () => {
+  const times = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m = 0; m < 60; m += 15) {
+      const hour = h.toString().padStart(2, '0');
+      const minute = m.toString().padStart(2, '0');
+      times.push(`${hour}:${minute}`);
+    }
+  }
+  return times;
+};
+
+const timeOptions = generateTimeOptions();
 
 const YouthSubprogramsAdmin = () => {
   const [subprograms, setSubprograms] = useState<YouthSubprogram[]>([]);
@@ -68,7 +84,8 @@ const YouthSubprogramsAdmin = () => {
       title: "",
       description: "",
       day_of_week: "",
-      time_interval: "",
+      start_time: "", // Initialize new fields
+      end_time: "",   // Initialize new fields
       contact_email: "",
       contact_phone: "",
       display_order: subprograms.length > 0 ? Math.max(...subprograms.map(s => s.display_order || 0)) + 1 : 1,
@@ -94,36 +111,30 @@ const YouthSubprogramsAdmin = () => {
 
     setSaving(true);
     try {
+      const payload = {
+        program_tag: currentSubprogram.program_tag,
+        title: currentSubprogram.title,
+        description: currentSubprogram.description,
+        day_of_week: currentSubprogram.day_of_week,
+        start_time: currentSubprogram.start_time || null, // Use null for empty string
+        end_time: currentSubprogram.end_time || null,     // Use null for empty string
+        contact_email: currentSubprogram.contact_email,
+        contact_phone: currentSubprogram.contact_phone,
+        display_order: currentSubprogram.display_order,
+      };
+
       if (currentSubprogram.id) {
         // Update existing subprogram
         const { error } = await supabase
           .from("youth_subprograms")
-          .update({
-            program_tag: currentSubprogram.program_tag,
-            title: currentSubprogram.title,
-            description: currentSubprogram.description,
-            day_of_week: currentSubprogram.day_of_week,
-            time_interval: currentSubprogram.time_interval,
-            contact_email: currentSubprogram.contact_email,
-            contact_phone: currentSubprogram.contact_phone,
-            display_order: currentSubprogram.display_order,
-          })
+          .update(payload)
           .eq("id", currentSubprogram.id);
 
         if (error) throw error;
         showSuccess("Youth subprogram updated successfully!");
       } else {
         // Add new subprogram
-        const { error } = await supabase.from("youth_subprograms").insert({
-          program_tag: currentSubprogram.program_tag,
-          title: currentSubprogram.title,
-          description: currentSubprogram.description,
-          day_of_week: currentSubprogram.day_of_week,
-          time_interval: currentSubprogram.time_interval,
-          contact_email: currentSubprogram.contact_email,
-          contact_phone: currentSubprogram.contact_phone,
-          display_order: currentSubprogram.display_order,
-        });
+        const { error } = await supabase.from("youth_subprograms").insert(payload);
 
         if (error) throw error;
         showSuccess("Youth subprogram added successfully!");
@@ -187,7 +198,11 @@ const YouthSubprogramsAdmin = () => {
               <CardContent>
                 <p className="text-gray-700 dark:text-gray-300 mb-2 line-clamp-3">{subprogram.description}</p>
                 {subprogram.day_of_week && <p className="text-sm text-muted-foreground">Day: {subprogram.day_of_week}</p>}
-                {subprogram.time_interval && <p className="text-sm text-muted-foreground">Time: {subprogram.time_interval}</p>}
+                {(subprogram.start_time || subprogram.end_time) && (
+                  <p className="text-sm text-muted-foreground">
+                    Time: {subprogram.start_time || "N/A"} - {subprogram.end_time || "N/A"}
+                  </p>
+                )}
                 {subprogram.contact_email && <p className="text-sm text-muted-foreground">Email: {subprogram.contact_email}</p>}
                 {subprogram.contact_phone && <p className="text-sm text-muted-foreground">Phone: {subprogram.contact_phone}</p>}
                 <p className="text-sm text-muted-foreground">Order: {subprogram.display_order}</p>
@@ -271,16 +286,44 @@ const YouthSubprogramsAdmin = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="time_interval" className="text-right">
-                Time Interval
+              <Label htmlFor="start_time" className="text-right">
+                Start Time
               </Label>
-              <Input
-                id="time_interval"
-                value={currentSubprogram?.time_interval || ""}
-                onChange={(e) => setCurrentSubprogram({ ...currentSubprogram, time_interval: e.target.value })}
-                className="col-span-3"
-                placeholder="e.g., 6:00 PM - 7:30 PM"
-              />
+              <Select
+                value={currentSubprogram?.start_time || ""}
+                onValueChange={(value) => setCurrentSubprogram({ ...currentSubprogram, start_time: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select start time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="end_time" className="text-right">
+                End Time
+              </Label>
+              <Select
+                value={currentSubprogram?.end_time || ""}
+                onValueChange={(value) => setCurrentSubprogram({ ...currentSubprogram, end_time: value })}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select end time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="contact_email" className="text-right">
