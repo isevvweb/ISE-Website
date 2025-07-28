@@ -14,6 +14,7 @@ interface DigitalSignSettings {
   max_announcements: number;
   show_descriptions: boolean;
   show_images: boolean;
+  rotation_interval_seconds: number; // New field
 }
 
 const DigitalSignSettingsAdmin = () => {
@@ -41,6 +42,7 @@ const DigitalSignSettingsAdmin = () => {
         max_announcements: 3,
         show_descriptions: true,
         show_images: true,
+        rotation_interval_seconds: 15, // Default value
       });
     } else {
       setSettings(data || {});
@@ -53,6 +55,10 @@ const DigitalSignSettingsAdmin = () => {
       showError("Number of announcements must be a non-negative number.");
       return;
     }
+    if (settings.rotation_interval_seconds === undefined || settings.rotation_interval_seconds < 5) {
+      showError("Rotation interval must be at least 5 seconds.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -60,6 +66,7 @@ const DigitalSignSettingsAdmin = () => {
         max_announcements: settings.max_announcements,
         show_descriptions: settings.show_descriptions,
         show_images: settings.show_images,
+        rotation_interval_seconds: settings.rotation_interval_seconds, // Save new field
       };
 
       let error;
@@ -116,6 +123,18 @@ const DigitalSignSettingsAdmin = () => {
                 onChange={(e) => setSettings({ ...settings, max_announcements: parseInt(e.target.value) || 0 })}
               />
               <p className="text-sm text-muted-foreground">Set to 0 to hide announcements section.</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="rotation_interval_seconds">Rotation Interval (seconds)</Label>
+              <Input
+                id="rotation_interval_seconds"
+                type="number"
+                min="5"
+                value={settings.rotation_interval_seconds ?? ""}
+                onChange={(e) => setSettings({ ...settings, rotation_interval_seconds: parseInt(e.target.value) || 0 })}
+              />
+              <p className="text-sm text-muted-foreground">Time before switching sections (minimum 5 seconds).</p>
             </div>
 
             <div className="flex items-center space-x-2">

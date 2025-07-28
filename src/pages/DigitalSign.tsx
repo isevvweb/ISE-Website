@@ -4,7 +4,7 @@ import { format, parseISO, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button"; // Import Button component
+import { Button } from "@/components/ui/button";
 
 interface PrayerTimesData {
   code: number;
@@ -68,6 +68,7 @@ interface DigitalSignSettings {
   max_announcements: number;
   show_descriptions: boolean;
   show_images: boolean;
+  rotation_interval_seconds: number; // New field
 }
 
 // Helper function to format 24-hour time to 12-hour with AM/PM
@@ -122,7 +123,7 @@ const fetchDigitalSignSettings = async (): Promise<DigitalSignSettings> => {
   if (error) {
     // If settings don't exist, return defaults
     console.warn("Digital sign settings not found, using defaults:", error.message);
-    return { id: '00000000-0000-0000-0000-000000000001', max_announcements: 3, show_descriptions: true, show_images: true };
+    return { id: '00000000-0000-0000-0000-000000000001', max_announcements: 3, show_descriptions: true, show_images: true, rotation_interval_seconds: 15 };
   }
   return data;
 };
@@ -172,14 +173,19 @@ const DigitalSign = () => {
   });
 
   useEffect(() => {
+    // Use the rotation_interval_seconds from settings, default to 15 if not loaded or invalid
+    const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
+      ? settings.rotation_interval_seconds * 1000
+      : 15000; // Default to 15 seconds
+
     const interval = setInterval(() => {
       setCurrentView((prevView) =>
         prevView === 'prayerTimes' ? 'announcements' : 'prayerTimes'
       );
-    }, 15000); // Switch every 15 seconds
+    }, intervalTime);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [settings]); // Re-run effect when settings change
 
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
@@ -211,8 +217,8 @@ const DigitalSign = () => {
       <div className="flex justify-center mb-8">
         <Button
           onClick={() => setCurrentView(currentView === 'prayerTimes' ? 'announcements' : 'prayerTimes')}
-          className="text-3xl px-8 py-4" // Increased button size
-          variant="secondary" // Use a secondary variant for contrast
+          className="text-3xl px-8 py-4"
+          variant="secondary"
         >
           {currentView === 'prayerTimes' ? 'Show Announcements' : 'Show Prayer Times'}
         </Button>
