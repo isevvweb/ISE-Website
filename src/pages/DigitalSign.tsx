@@ -209,6 +209,17 @@ const DigitalSign = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Log events data and errors for debugging
+  useEffect(() => {
+    if (upcomingEvents) {
+      console.log("Upcoming Events Data:", upcomingEvents);
+    }
+    if (eventsError) {
+      console.error("Upcoming Events Error:", eventsError);
+    }
+  }, [upcomingEvents, eventsError]);
+
+
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
   // Define the views to rotate through
@@ -242,9 +253,10 @@ const DigitalSign = () => {
   if (settingsError) {
     showError("Error loading digital sign settings: " + settingsError.message);
   }
-  if (eventsError) {
-    showError("Error loading upcoming events for sign: " + eventsError.message);
-  }
+  // Removed showError for eventsError here, as it's logged in useEffect now.
+  // if (eventsError) {
+  //   showError("Error loading upcoming events for sign: " + eventsError.message);
+  // }
 
   const currentView = views[currentViewIndex]?.id;
 
