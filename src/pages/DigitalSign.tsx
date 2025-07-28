@@ -204,31 +204,33 @@ const DigitalSign = () => {
 
     const allPrayers: { name: string; time: Date }[] = [];
 
+    // Helper to create a Date object in the specified timezone for today
+    const createPrayerDateTime = (timeString: string, dateString: string) => {
+      const dateTimeString = `${dateString}T${timeString}:00`;
+      const zonedDate = toZonedTime(dateTimeString, TIMEZONE);
+      console.log(`  Creating Date for ${timeString} on ${dateString}: ${zonedDate.toISOString()}`);
+      return zonedDate;
+    };
+
     // Filter prayerOrder to include Jumuah only on Fridays
     const currentDayPrayerOrder = prayerOrder.filter(prayerName =>
       prayerName !== "Jumuah" || (prayerName === "Jumuah" && isFriday)
     );
     console.log("Prayers considered for today:", currentDayPrayerOrder);
 
-    // Helper to create a Date object in the specified timezone for today
-    const createPrayerDateTime = (timeString: string, dateString: string) => {
-      const dateTimeString = `${dateString}T${timeString}:00`;
-      return toZonedTime(dateTimeString, TIMEZONE);
-    };
-
     currentDayPrayerOrder.forEach(prayerName => {
       let timeString: string | undefined;
 
       if (prayerName === "Jumuah") {
         timeString = iqamahData[prayerName];
-        console.log(`Jumuah time from DB: ${timeString}`);
+        console.log(`  Jumuah time from DB: ${timeString}`);
       } else {
         timeString = iqamahData[prayerName];
         if (!timeString || timeString === "N/A") {
           timeString = apiData.data.timings[prayerName as keyof typeof apiData.data.timings];
-          console.log(`${prayerName} time (fallback to API): ${timeString}`);
+          console.log(`  ${prayerName} time (fallback to API): ${timeString}`);
         } else {
-          console.log(`${prayerName} time from DB: ${timeString}`);
+          console.log(`  ${prayerName} time from DB: ${timeString}`);
         }
       }
 
@@ -236,11 +238,12 @@ const DigitalSign = () => {
         const prayerDateTime = createPrayerDateTime(timeString, todayInChicago);
         if (!isNaN(prayerDateTime.getTime())) {
           allPrayers.push({ name: prayerName, time: prayerDateTime });
+          console.log(`  Added ${prayerName}: ${prayerDateTime.toISOString()}`);
         } else {
-          console.warn(`Failed to create date for ${prayerName} with time ${timeString}`);
+          console.warn(`  Failed to create date for ${prayerName} with time ${timeString}`);
         }
       } else {
-        console.log(`${prayerName} time is N/A or missing.`);
+        console.log(`  ${prayerName} time is N/A or missing.`);
       }
     });
 
@@ -249,7 +252,14 @@ const DigitalSign = () => {
     allPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
     console.log("All populated prayers for today (sorted):", allPrayers.map(p => `${p.name}: ${p.time.toISOString()}`));
 
-    let next = allPrayers.find(p => p.time > nowInChicago);
+    let next = null;
+    for (const p of allPrayers) {
+      console.log(`  Comparing ${p.name} (${p.time.toISOString()}) > Current (${nowInChicago.toISOString()}): ${p.time > nowInChicago}`);
+      if (p.time > nowInChicago) {
+        next = p;
+        break;
+      }
+    }
     console.log("Next prayer found for today:", next ? `${next.name}: ${next.time.toISOString()}` : "None");
 
     // If no prayer found for today, get tomorrow's Fajr
