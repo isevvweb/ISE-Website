@@ -1,15 +1,10 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { Info, Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+  Sheet, SheetContent, SheetTrigger
+} from "@/components/ui/sheet";
 import { CreatorInfoDialog } from "@/components/CreatorInfoDialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -18,14 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog"; // Import Dialog components
-import { Input } from "@/components/ui/input"; // Import Input
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const Header = () => {
   const [isCreatorInfoOpen, setIsCreatorInfoOpen] = React.useState(false);
-  const [isSearchDialogOpen, setIsSearchDialogOpen] = React.useState(false); // State for search dialog
-  const [searchQuery, setSearchQuery] = React.useState(""); // State for search input
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const navigate = useNavigate();
 
   const publicRoutes = [
     { name: "Home", path: "/" },
@@ -43,8 +38,8 @@ const Header = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchDialogOpen(false); // Close dialog after search
-      setSearchQuery(""); // Clear search query
+      setIsSearchDialogOpen(false);
+      setSearchQuery("");
     }
   };
 
@@ -55,26 +50,13 @@ const Header = () => {
           <span className="font-bold text-lg whitespace-nowrap">Islamic Society of Evansville</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <NavigationMenu className="hidden md:flex">
-          <NavigationMenuList>
-            {publicRoutes.map((route) => (
-              <NavigationMenuItem key={route.path}>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link to={route.path}>{route.name}</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-
         <div className="flex items-center space-x-2">
           {/* Search Icon */}
           <Button
             variant="ghost"
             size="icon"
             aria-label="Search"
-            onClick={() => setIsSearchDialogOpen(true)} // Open search dialog
+            onClick={() => setIsSearchDialogOpen(true)}
           >
             <Search className="h-5 w-5" />
           </Button>
@@ -92,9 +74,9 @@ const Header = () => {
             <Info className="h-5 w-5" />
           </Button>
 
-          {/* Mobile Navigation */}
+          {/* Navigation Sheet Trigger (always visible) */}
           <Sheet>
-            <SheetTrigger asChild className="md:hidden">
+            <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Toggle navigation">
                 <Menu className="h-6 w-6" />
               </Button>
