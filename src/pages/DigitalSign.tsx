@@ -370,8 +370,6 @@ const DigitalSign = () => {
 
       {/* Footer Section */}
       <div className="text-center mt-12 text-4xl text-gray-400">
-        <p>Islamic Society of Evansville</p>
-        <p>4200 Grimm Road, Newburgh, IN</p>
         <p className="mt-2">www.isevv.org</p>
       </div>
     </div>
