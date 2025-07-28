@@ -5,7 +5,7 @@ import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-// No longer need Button as it was only for debugging/testing the timer
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
 
 interface PrayerTimesData {
   code: number;
@@ -72,7 +72,22 @@ interface DigitalSignSettings {
   rotation_interval_seconds: number; // New field
 }
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  start: string; // ISO date string
+  end: string;   // ISO date string
+  location?: string;
+  htmlLink: string;
+  calendarId: string;
+}
+
 const TIMEZONE = 'America/Chicago'; // Define the timezone for Evansville
+
+// Google Calendar IDs
+const YOUTH_CALENDAR_ID = '199d2363fbb2b1354d629ab458ba807ac16afc63f329f647449011f4c60e41b2@group.calendar.google.com';
+const COMMUNITY_CALENDAR_ID = '464ad63344b9b7c026adb7ee76c370b95864259cac908d685142e8571291449c@group.calendar.google.com';
 
 // Helper function to format 24-hour time to 12-hour with AM/PM
 const formatTimeForDisplay = (time24h: string): string => {
@@ -147,9 +162,19 @@ const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> 
   return data || [];
 };
 
+const fetchUpcomingEvents = async (): Promise<CalendarEvent[]> => {
+  const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
+    body: { calendarIds: [YOUTH_CALENDAR_ID, COMMUNITY_CALENDAR_ID] },
+  });
+
+  if (error) {
+    throw new Error("Error fetching upcoming events: " + error.message);
+  }
+  return data.events || [];
+};
+
 const DigitalSign = () => {
-  const [currentView, setCurrentView] = useState<'prayerTimes' | 'announcements'>('prayerTimes');
-  // Removed nextPrayerInfo and countdown states
+  const [currentViewIndex, setCurrentViewIndex] = useState(0);
 
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
     queryKey: ["digitalSignSettings"],
@@ -176,26 +201,37 @@ const DigitalSign = () => {
     refetchOnWindowFocus: false,
   });
 
+  const { data: upcomingEvents, isLoading: isLoadingEvents, error: eventsError } = useQuery<CalendarEvent[], Error>({
+    queryKey: ["upcomingEvents"],
+    queryFn: fetchUpcomingEvents,
+    staleTime: 1000 * 60 * 10, // Events considered fresh for 10 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+    refetchOnWindowFocus: false,
+  });
+
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
-  // Removed formatDuration and getNextPrayerCalculated functions
+  // Define the views to rotate through
+  const views = [
+    { id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView', show: true },
+    { id: 'announcements', title: 'Announcements', component: 'AnnouncementsView', show: settings && settings.max_announcements > 0 && announcements && announcements.length > 0 },
+    { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView', show: upcomingEvents && upcomingEvents.length > 0 },
+  ].filter(view => view.show); // Filter out views that shouldn't be shown
 
   // Effect for automatic view rotation
   useEffect(() => {
+    if (views.length === 0) return; // No views to rotate
+
     const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
       ? settings.rotation_interval_seconds * 1000
       : 15000; // Default to 15 seconds
 
     const interval = setInterval(() => {
-      setCurrentView((prevView) =>
-        prevView === 'prayerTimes' ? 'announcements' : 'prayerTimes'
-      );
+      setCurrentViewIndex((prevIndex) => (prevIndex + 1) % views.length);
     }, intervalTime);
 
     return () => clearInterval(interval);
-  }, [settings]);
-
-  // Removed countdown timer useEffect
+  }, [settings, views.length]); // Re-run if settings or number of active views changes
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
@@ -206,14 +242,17 @@ const DigitalSign = () => {
   if (settingsError) {
     showError("Error loading digital sign settings: " + settingsError.message);
   }
+  if (eventsError) {
+    showError("Error loading upcoming events for sign: " + eventsError.message);
+  }
 
-  const showAnnouncementsSection = settings && settings.max_announcements > 0 && announcements && announcements.length > 0;
+  const currentView = views[currentViewIndex]?.id;
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden">
       {/* Dynamic Title for the current section */}
       <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">
-        {currentView === 'prayerTimes' ? 'Prayer Times' : 'Announcements'}
+        {views[currentViewIndex]?.title || 'Loading...'}
       </h2>
 
       {/* Main Content Area */}
@@ -251,7 +290,6 @@ const DigitalSign = () => {
                     </span>
                   </div>
                 ))}
-                {/* Removed Countdown Timer */}
               </div>
             ) : (
               <p className="text-4xl text-red-400">Failed to load prayer times.</p>
@@ -259,7 +297,7 @@ const DigitalSign = () => {
           </div>
         )}
 
-        {currentView === 'announcements' && showAnnouncementsSection && (
+        {currentView === 'announcements' && views[currentViewIndex]?.show && (
           <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
@@ -293,11 +331,48 @@ const DigitalSign = () => {
             )}
           </div>
         )}
+
+        {currentView === 'upcomingEvents' && views[currentViewIndex]?.show && (
+          <div key="upcoming-events-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+            {isLoadingEvents ? (
+              <div className="space-y-10 flex-grow flex flex-col justify-center">
+                <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
+                <Skeleton className="h-12 w-full bg-gray-700" />
+                <Skeleton className="h-12 w-full bg-gray-700" />
+                <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
+              </div>
+            ) : upcomingEvents && upcomingEvents.length > 0 ? (
+              <div className="flex-grow flex flex-col justify-center space-y-8 overflow-y-auto">
+                {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
+                  <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
+                    <CardHeader className="p-0 mb-2">
+                      <CardTitle className="text-4xl font-semibold text-primary-foreground">{event.title}</CardTitle>
+                      <p className="text-2xl text-gray-300">
+                        {format(parseISO(event.start), 'MMM dd, yyyy hh:mm a')}
+                        {event.end && ` - ${format(parseISO(event.end), 'hh:mm a')}`}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="p-0 text-2xl text-gray-400">
+                      {event.description && <p className="mb-2 line-clamp-2">{event.description}</p>}
+                      {event.location && <p className="font-medium">Location: {event.location}</p>}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-4xl text-center text-gray-400 flex-grow flex items-center justify-center">
+                No upcoming events to display.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Footer Section - Removed content */}
+      {/* Footer Section */}
       <div className="text-center mt-12 text-4xl text-gray-400">
-        {/* Removed: Address and website */}
+        <p>Islamic Society of Evansville</p>
+        <p>4200 Grimm Road, Newburgh, IN</p>
+        <p className="mt-2">www.isevv.org</p>
       </div>
     </div>
   );
