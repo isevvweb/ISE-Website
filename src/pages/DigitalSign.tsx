@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { showError } => {
+import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrayerTimesData {
