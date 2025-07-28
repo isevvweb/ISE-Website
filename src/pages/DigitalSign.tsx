@@ -209,22 +209,15 @@ const DigitalSign = () => {
         {/* Removed: Date (Gregorian and Hijri) */}
       </div>
 
-      {/* Toggle Button */}
-      <div className="flex justify-center mb-8">
-        <Button
-          onClick={() => setCurrentView(currentView === 'prayerTimes' ? 'announcements' : 'prayerTimes')}
-          className="text-3xl px-8 py-4"
-          variant="secondary"
-        >
-          {currentView === 'prayerTimes' ? 'Show Announcements' : 'Show Prayer Times'}
-        </Button>
-      </div>
+      {/* Dynamic Title for the current section */}
+      <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">
+        {currentView === 'prayerTimes' ? 'Prayer Times' : 'Announcements'}
+      </h2>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col items-center justify-center relative">
+      <div className="flex-grow relative w-full max-w-5xl mx-auto">
         {currentView === 'prayerTimes' && (
           <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
-            <h2 className="text-7xl font-bold mb-12 text-primary-foreground">Prayer Times</h2>
             {isLoadingPrayer ? (
               <div className="space-y-10 w-full max-w-3xl">
                 {[...Array(5)].map((_, i) => (
@@ -270,7 +263,6 @@ const DigitalSign = () => {
 
         {currentView === 'announcements' && showAnnouncementsSection && (
           <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
-            <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">Announcements</h2>
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
