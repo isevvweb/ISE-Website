@@ -4,6 +4,7 @@ import { format, parseISO, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button"; // Import Button component
 
 interface PrayerTimesData {
   code: number;
@@ -195,43 +196,54 @@ const DigitalSign = () => {
   const showAnnouncementsSection = settings && settings.max_announcements > 0 && announcements && announcements.length > 0;
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden"> {/* Increased padding */}
+    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden">
       {/* Header Section */}
-      <div className="text-center mb-12"> {/* Increased margin-bottom */}
-        <h1 className="text-8xl font-extrabold text-primary-foreground leading-tight"> {/* Increased font size */}
+      <div className="text-center mb-12">
+        <h1 className="text-8xl font-extrabold text-primary-foreground leading-tight">
           Islamic Society of Evansville
         </h1>
-        <p className="text-5xl text-gray-300 mt-6"> {/* Increased font size and margin-top */}
+        <p className="text-5xl text-gray-300 mt-6">
           {prayerData?.apiTimes.data.date.readable} ({prayerData?.apiTimes.data.date.hijri.date} Hijri)
         </p>
+      </div>
+
+      {/* Toggle Button */}
+      <div className="flex justify-center mb-8">
+        <Button
+          onClick={() => setCurrentView(currentView === 'prayerTimes' ? 'announcements' : 'prayerTimes')}
+          className="text-3xl px-8 py-4" // Increased button size
+          variant="secondary" // Use a secondary variant for contrast
+        >
+          {currentView === 'prayerTimes' ? 'Show Announcements' : 'Show Prayer Times'}
+        </Button>
       </div>
 
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col items-center justify-center relative">
         {currentView === 'prayerTimes' && (
-          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in"> {/* Increased padding */}
-            <h2 className="text-7xl font-bold mb-12 text-primary-foreground">Prayer Times</h2> {/* Increased font size and margin-bottom */}
+          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+            <h2 className="text-7xl font-bold mb-12 text-primary-foreground">Prayer Times</h2>
             {isLoadingPrayer ? (
-              <div className="space-y-10 w-full max-w-3xl"> {/* Increased max-width and space-y */}
+              <div className="space-y-10 w-full max-w-3xl">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="grid grid-cols-3 gap-10 items-center"> {/* Increased gap */}
-                    <Skeleton className="h-20 w-full bg-gray-700" /> {/* Increased height */}
+                  <div key={i} className="grid grid-cols-3 gap-10 items-center">
+                    <Skeleton className="h-20 w-full bg-gray-700" />
                     <Skeleton className="h-20 w-full bg-gray-700" />
                     <Skeleton className="h-20 w-full bg-gray-700" />
                   </div>
                 ))}
               </div>
             ) : prayerData ? (
-              <div className="w-full max-w-3xl"> {/* Increased max-width */}
+              <div className="w-full max-w-3xl">
                 {/* Table Header (Implicit) */}
-                <div className="grid grid-cols-3 gap-10 pb-6 border-b-4 border-gray-600 mb-8"> {/* Increased gap, padding-bottom, margin-bottom */}
-                  <span className="text-5xl font-bold text-gray-400 text-left">Prayer</span> {/* Increased font size */}
-                  <span className="text-5xl font-bold text-gray-400 text-center">Adhan</span> {/* Increased font size */}
-                  <span className="text-5xl font-bold text-gray-400 text-right">Iqamah</span> {/* Increased font size */}
+                <div className="grid grid-cols-3 gap-10 pb-6 border-b-4 border-gray-600 mb-8">
+                  <span className="text-5xl font-bold text-gray-400 text-left">Prayer</span>
+                  <span className="text-5xl font-bold text-gray-400 text-center">Adhan</span>
+                  <span className="text-5xl font-bold text-gray-400 text-right">Iqamah</span>
                 </div>
                 {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
-                  <div key={prayer} className="grid grid-cols-3 gap-10 py-8 border-b border-gray-700 last:border-b-0"> {/* Increased gap and padding-y */}
+                  <div key={prayer} className="grid grid-cols-3 gap-10 py-8 border-b border-gray-700 last:border-b-0">
                     <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
                     <span className="text-5xl text-gray-400 text-center">
                       {formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer])}
@@ -241,7 +253,7 @@ const DigitalSign = () => {
                     </span>
                   </div>
                 ))}
-                <div className="grid grid-cols-3 gap-10 py-8 mt-10"> {/* Increased gap, padding-y, margin-top */}
+                <div className="grid grid-cols-3 gap-10 py-8 mt-10">
                   <span className="text-6xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span>
                   <span className="text-5xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
@@ -255,8 +267,8 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'announcements' && showAnnouncementsSection && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in"> {/* Increased padding */}
-            <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">Announcements</h2> {/* Increased font size and margin-bottom */}
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+            <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">Announcements</h2>
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -264,7 +276,7 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-12"> {/* Increased space-y */}
+              <div className="flex-grow flex flex-col justify-center space-y-12">
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
                     <h3 className="text-6xl font-semibold text-gray-100 mb-6">{announcement.title}</h3>
@@ -272,7 +284,7 @@ const DigitalSign = () => {
                       <p className="text-4xl text-gray-300 mb-8">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full h-[400px] overflow-hidden rounded-md mx-auto mb-6 flex items-center justify-center"> {/* Increased height and margin-bottom */}
+                      <div className="w-full h-[400px] overflow-hidden rounded-md mx-auto mb-6 flex items-center justify-center">
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
@@ -292,7 +304,7 @@ const DigitalSign = () => {
       </div>
 
       {/* Footer Section */}
-      <div className="text-center mt-12 text-4xl text-gray-400"> {/* Increased margin-top and font size */}
+      <div className="text-center mt-12 text-4xl text-gray-400">
         <p>Islamic Society of Evansville | 4200 Grimm Road, Newburgh, IN</p>
         <p>www.isevv.org</p>
       </div>
