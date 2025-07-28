@@ -233,13 +233,6 @@ const DigitalSign = () => {
 
     allPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
 
-    console.log("--- getNextPrayer Debug ---");
-    console.log("Current time (Chicago):", nowInChicago.toISOString());
-    console.log("All sorted prayer times for today:");
-    allPrayers.forEach(p => {
-      console.log(`  ${p.name}: ${p.time.toISOString()}`);
-    });
-
     let next = allPrayers.find(p => p.time > nowInChicago);
 
     if (!next && apiData) {
@@ -253,8 +246,6 @@ const DigitalSign = () => {
         }
       }
     }
-    console.log("Next prayer identified:", next ? `${next.name}: ${next.time.toISOString()}` : "None");
-    console.log("--- End getNextPrayer Debug ---");
     return next;
   }, [prayerOrder]);
 
@@ -273,44 +264,58 @@ const DigitalSign = () => {
     return () => clearInterval(interval);
   }, [settings]);
 
-  // Effect for countdown timer
+  // Effect for countdown timer and next prayer determination
   useEffect(() => {
     if (!prayerData) return;
 
-    const updateCountdown = () => {
+    let intervalId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const calculateAndSetNextPrayer = () => {
       const next = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
       setNextPrayerInfo(next);
+      return next;
+    };
 
-      if (next) {
-        const nowInChicago = toZonedTime(new Date(), TIMEZONE);
-        const diff = next.time.getTime() - nowInChicago.getTime();
+    // Initial calculation when prayerData is available
+    let currentNextPrayer = calculateAndSetNextPrayer();
 
-        if (diff <= 0) {
-          // Prayer time has passed, re-calculate next prayer after a short delay
-          setCountdown("Time for prayer!");
-          setTimeout(() => {
-            const updatedNext = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
-            setNextPrayerInfo(updatedNext);
-            if (updatedNext) {
-              const newDiff = updatedNext.time.getTime() - toZonedTime(new Date(), TIMEZONE).getTime();
-              setCountdown(formatDuration(newDiff));
-            } else {
-              setCountdown("No more prayers today.");
-            }
-          }, 1000); // Wait 1 second before updating to "next"
-        } else {
-          setCountdown(formatDuration(diff));
-        }
-      } else {
+    const updateCountdown = () => {
+      if (!currentNextPrayer) {
         setCountdown("No prayer data available.");
+        return;
+      }
+
+      const nowInChicago = toZonedTime(new Date(), TIMEZONE);
+      const diff = currentNextPrayer.time.getTime() - nowInChicago.getTime();
+
+      if (diff <= 0) {
+        setCountdown("Time for prayer!");
+        // If prayer time has passed, recalculate next prayer after a short delay
+        if (timeoutId) clearTimeout(timeoutId); // Clear any existing timeout
+        timeoutId = setTimeout(() => {
+          currentNextPrayer = calculateAndSetNextPrayer(); // Recalculate
+          if (currentNextPrayer) {
+            const newDiff = currentNextPrayer.time.getTime() - toZonedTime(new Date(), TIMEZONE).getTime();
+            setCountdown(formatDuration(newDiff));
+          } else {
+            setCountdown("No more prayers today.");
+          }
+          timeoutId = null; // Clear timeout ID after execution
+        }, 1000); // Wait 1 second before updating to "next"
+      } else {
+        setCountdown(formatDuration(diff));
       }
     };
 
-    const intervalId = setInterval(updateCountdown, 1000);
-    updateCountdown(); // Initial call
+    intervalId = setInterval(updateCountdown, 1000);
+    updateCountdown(); // Initial call to set countdown immediately
 
-    return () => clearInterval(intervalId);
-  }, [prayerData, getNextPrayer]);
+    return () => {
+      clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [prayerData, getNextPrayer]); // getNextPrayer is a dependency because it's a useCallback
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
