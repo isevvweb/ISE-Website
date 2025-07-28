@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { showError } from "@/utils/toast"; // Corrected import statement
+import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PrayerTimesData {
@@ -232,24 +232,24 @@ const DigitalSign = () => {
                 {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
                   <div key={prayer} className="grid grid-cols-3 gap-10 py-8 border-b border-gray-700 last:border-b-0"> {/* Increased gap and padding-y */}
-                    <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span> {/* Increased font size */}
-                    <span className="text-5xl text-gray-400 text-center"> {/* Increased font size */}
+                    <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
+                    <span className="text-5xl text-gray-400 text-center">
                       {formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer])}
                     </span>
-                    <span className="text-6xl font-bold text-primary-foreground text-right"> {/* Increased font size */}
+                    <span className="text-6xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
                 ))}
                 <div className="grid grid-cols-3 gap-10 py-8 mt-10"> {/* Increased gap, padding-y, margin-top */}
-                  <span className="text-6xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span> {/* Increased font size */}
-                  <span className="text-5xl font-bold text-primary-foreground text-right"> {/* Increased font size */}
+                  <span className="text-6xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span>
+                  <span className="text-5xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
                   </span>
                 </div>
               </div>
             ) : (
-              <p className="text-4xl text-red-400">Failed to load prayer times.</p> {/* Increased font size */}
+              <p className="text-4xl text-red-400">Failed to load prayer times.</p>
             )}
           </div>
         )}
@@ -267,23 +267,23 @@ const DigitalSign = () => {
               <div className="flex-grow flex flex-col justify-center space-y-12"> {/* Increased space-y */}
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
-                    <h3 className="text-6xl font-semibold text-gray-100 mb-6">{announcement.title}</h3> {/* Increased font size and margin-bottom */}
+                    <h3 className="text-6xl font-semibold text-gray-100 mb-6">{announcement.title}</h3>
                     {settings?.show_descriptions && (
-                      <p className="text-4xl text-gray-300 mb-8">{announcement.description}</p> {/* Increased font size and margin-bottom */}
+                      <p className="text-4xl text-gray-300 mb-8">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
                       <div className="w-full h-[400px] overflow-hidden rounded-md mx-auto mb-6 flex items-center justify-center"> {/* Increased height and margin-bottom */}
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
-                    <p className="text-3xl text-gray-400"> {/* Increased font size */}
+                    <p className="text-3xl text-gray-400">
                       {format(parseISO(announcement.announcement_date), "PPP")}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-4xl text-center text-gray-400 flex-grow flex items-center justify-center"> {/* Increased font size */}
+              <p className="text-4xl text-center text-gray-400 flex-grow flex items-center justify-center">
                 No active announcements to display.
               </p>
             )}
