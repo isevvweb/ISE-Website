@@ -5,7 +5,7 @@ import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+// No longer need Button as it was only for debugging/testing the timer
 
 interface PrayerTimesData {
   code: number;
@@ -149,8 +149,7 @@ const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> 
 
 const DigitalSign = () => {
   const [currentView, setCurrentView] = useState<'prayerTimes' | 'announcements'>('prayerTimes');
-  const [nextPrayerInfo, setNextPrayerInfo] = useState<{ name: string; time: Date } | null>(null);
-  const [countdown, setCountdown] = useState<string>("");
+  // Removed nextPrayerInfo and countdown states
 
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
     queryKey: ["digitalSignSettings"],
@@ -179,82 +178,7 @@ const DigitalSign = () => {
 
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
-  // Helper to format duration for countdown
-  const formatDuration = (ms: number) => {
-    if (ms < 0) return "00:00:00";
-
-    const seconds = Math.floor((ms / 1000) % 60);
-    const minutes = Math.floor((ms / (1000 * 60)) % 60);
-    const hours = Math.floor((ms / (1000 * 60 * 60)));
-
-    const pad = (num: number) => num.toString().padStart(2, '0');
-
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-  };
-
-  // Memoized function to determine the next prayer time
-  const getNextPrayerCalculated = useCallback((apiData: PrayerTimesData, iqamahData: Record<string, string>) => {
-    const nowInChicago = toZonedTime(new Date(), TIMEZONE);
-    const todayInChicago = formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
-    const isFriday = format(nowInChicago, 'EEEE') === 'Friday';
-
-    const allPrayers: { name: string; time: Date }[] = [];
-
-    // Helper to create a Date object in the specified timezone for today
-    const createPrayerDateTime = (timeString: string, dateString: string) => {
-      const dateTimeString = `${dateString}T${timeString}:00`;
-      return toZonedTime(dateTimeString, TIMEZONE);
-    };
-
-    // Filter prayerOrder to include Jumuah only on Fridays
-    const currentDayPrayerOrder = prayerOrder.filter(prayerName =>
-      prayerName !== "Jumuah" || (prayerName === "Jumuah" && isFriday)
-    );
-
-    currentDayPrayerOrder.forEach(prayerName => {
-      let timeString: string | undefined;
-
-      if (prayerName === "Jumuah") {
-        timeString = iqamahData[prayerName];
-      } else {
-        timeString = iqamahData[prayerName];
-        if (!timeString || timeString === "N/A") {
-          timeString = apiData.data.timings[prayerName as keyof typeof apiData.data.timings];
-        }
-      }
-
-      if (timeString && timeString !== "N/A") {
-        const prayerDateTime = createPrayerDateTime(timeString, todayInChicago);
-        if (!isNaN(prayerDateTime.getTime())) {
-          allPrayers.push({ name: prayerName, time: prayerDateTime });
-        }
-      }
-    });
-
-    allPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
-
-    let next = allPrayers.find(p => p.time > nowInChicago);
-
-    if (!next && apiData) {
-      const tomorrow = addDays(nowInChicago, 1);
-      const tomorrowInChicago = formatInTimeZone(tomorrow, TIMEZONE, 'yyyy-MM-dd');
-      const fajrTimeTomorrow = apiData.data.timings.Fajr;
-      if (fajrTimeTomorrow) {
-        const fajrDateTimeTomorrow = createPrayerDateTime(fajrTimeTomorrow, tomorrowInChicago);
-        if (!isNaN(fajrDateTimeTomorrow.getTime())) {
-          next = { name: "Fajr (Tomorrow)", time: fajrDateTimeTomorrow };
-        }
-      }
-    }
-    return next;
-  }, [prayerOrder]);
-
-  // Effect to set initial next prayer when prayerData loads or changes
-  useEffect(() => {
-    if (prayerData) {
-      setNextPrayerInfo(getNextPrayerCalculated(prayerData.apiTimes, prayerData.iqamahTimes));
-    }
-  }, [prayerData, getNextPrayerCalculated]);
+  // Removed formatDuration and getNextPrayerCalculated functions
 
   // Effect for automatic view rotation
   useEffect(() => {
@@ -271,34 +195,7 @@ const DigitalSign = () => {
     return () => clearInterval(interval);
   }, [settings]);
 
-  // Effect for countdown timer
-  useEffect(() => {
-    if (!nextPrayerInfo) {
-      setCountdown("Loading prayer times...");
-      return;
-    }
-
-    const interval = setInterval(() => {
-      const nowInChicago = toZonedTime(new Date(), TIMEZONE);
-      const diff = nextPrayerInfo.time.getTime() - nowInChicago.getTime();
-
-      if (diff <= 0) {
-        setCountdown("Time for prayer!");
-        // Trigger a re-calculation of the next prayer after a short delay
-        // This will cause the first useEffect to run again and update nextPrayerInfo
-        // which in turn will cause this useEffect to re-run and clear/restart the interval.
-        setTimeout(() => {
-          if (prayerData) { // Ensure prayerData is available for recalculation
-            setNextPrayerInfo(getNextPrayerCalculated(prayerData.apiTimes, prayerData.iqamahTimes));
-          }
-        }, 1000); // Give it a second before finding the *next* prayer
-      } else {
-        setCountdown(formatDuration(diff));
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [nextPrayerInfo, prayerData, getNextPrayerCalculated]); // Dependencies: nextPrayerInfo (to restart timer), prayerData (for recalculation), getNextPrayerCalculated (for stability)
+  // Removed countdown timer useEffect
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
@@ -354,14 +251,7 @@ const DigitalSign = () => {
                     </span>
                   </div>
                 ))}
-                {/* Countdown Timer */}
-                <div className="mt-12 text-center">
-                  {nextPrayerInfo && (
-                    <p className="text-5xl font-bold text-accent">
-                      Next Prayer: {nextPrayerInfo.name} in {countdown}
-                    </p>
-                  )}
-                </div>
+                {/* Removed Countdown Timer */}
               </div>
             ) : (
               <p className="text-4xl text-red-400">Failed to load prayer times.</p>
