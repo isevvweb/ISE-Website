@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Outlet } from "react-router-dom";
-import { ThemeProvider } from "next-themes"; // Import ThemeProvider
+import { ThemeProvider } from "next-themes";
 
 import Header from "./components/Header";
 import Index from "./pages/Index";
@@ -34,7 +34,8 @@ import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
-import Search from "./pages/Search"; // Import the new Search page
+import Search from "./pages/Search";
+import DigitalSign from "./pages/DigitalSign"; // Import the new DigitalSign page
 
 const queryClient = new QueryClient();
 
@@ -63,7 +64,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/donate" element={<Donate />} />
             <Route path="/annual-reports" element={<AnnualReports />} />
-            <Route path="/search" element={<Search />} /> {/* New Search Route */}
+            <Route path="/search" element={<Search />} />
           </Route>
 
           {/* Admin Routes (Publicly Accessible) */}
@@ -79,6 +80,9 @@ const App = () => (
             <Route path="youth-events" element={<YouthEventsAdmin />} />
             <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
           </Route>
+
+          {/* Digital Sign Route (no header/footer) */}
+          <Route path="/digital-sign" element={<DigitalSign />} />
 
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
