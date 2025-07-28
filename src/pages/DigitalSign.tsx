@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, parse } from "date-fns";
-import * as dateFnsTz from 'date-fns-tz'; // Changed to namespace import
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz'; // Corrected import to use toZonedTime
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -194,16 +194,15 @@ const DigitalSign = () => {
 
   // Function to determine the next prayer time
   const getNextPrayer = useCallback((apiData: PrayerTimesData, iqamahData: Record<string, string>) => {
-    const nowInChicago = dateFnsTz.utcToZonedTime(new Date(), TIMEZONE);
-    const todayInChicago = dateFnsTz.formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
+    const nowInChicago = toZonedTime(new Date(), TIMEZONE); // Changed from utcToZonedTime
+    const todayInChicago = formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
 
     const allPrayers: { name: string; time: Date }[] = [];
 
     // Helper to create a Date object in the specified timezone for today
     const createPrayerDateTime = (timeString: string, dateString: string) => {
-      // Parse the time string as if it's in Chicago time, then convert to UTC for consistent comparison
       const dateTimeString = `${dateString}T${timeString}:00`; // Add seconds and T for ISO format
-      return dateFnsTz.zonedTimeToUtc(dateTimeString, TIMEZONE);
+      return toZonedTime(dateTimeString, TIMEZONE); // Changed from zonedTimeToUtc
     };
 
     // Add daily prayers and Jumuah for today
@@ -229,7 +228,7 @@ const DigitalSign = () => {
 
     // If no prayer found for today, get tomorrow's Fajr
     if (!next && apiData) {
-      const tomorrowInChicago = dateFnsTz.formatInTimeZone(dateFnsTz.utcToZonedTime(new Date(nowInChicago.getTime() + 24 * 60 * 60 * 1000), TIMEZONE), TIMEZONE, 'yyyy-MM-dd');
+      const tomorrowInChicago = formatInTimeZone(toZonedTime(new Date(nowInChicago.getTime() + 24 * 60 * 60 * 1000), TIMEZONE), TIMEZONE, 'yyyy-MM-dd'); // Changed from utcToZonedTime
       const fajrTimeTomorrow = apiData.data.timings.Fajr;
       if (fajrTimeTomorrow) {
         const fajrDateTimeTomorrow = createPrayerDateTime(fajrTimeTomorrow, tomorrowInChicago);
@@ -265,7 +264,7 @@ const DigitalSign = () => {
       setNextPrayerInfo(next);
 
       if (next) {
-        const nowInChicago = dateFnsTz.utcToZonedTime(new Date(), TIMEZONE);
+        const nowInChicago = toZonedTime(new Date(), TIMEZONE); // Changed from utcToZonedTime
         const diff = next.time.getTime() - nowInChicago.getTime();
 
         if (diff <= 0) {
@@ -275,7 +274,7 @@ const DigitalSign = () => {
             const updatedNext = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
             setNextPrayerInfo(updatedNext);
             if (updatedNext) {
-              const newDiff = updatedNext.time.getTime() - dateFnsTz.utcToZonedTime(new Date(), TIMEZONE).getTime();
+              const newDiff = updatedNext.time.getTime() - toZonedTime(new Date(), TIMEZONE).getTime(); // Changed from utcToZonedTime
               setCountdown(formatDuration(newDiff));
             } else {
               setCountdown("No more prayers today.");
