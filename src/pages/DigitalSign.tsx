@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, parse } from "date-fns";
+import { zonedTimeToUtc, utcToZonedTime, formatInTimeZone } from 'date-fns-tz'; // Import date-fns-tz functions
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -70,6 +71,8 @@ interface DigitalSignSettings {
   show_images: boolean;
   rotation_interval_seconds: number; // New field
 }
+
+const TIMEZONE = 'America/Chicago'; // Define the timezone for Evansville
 
 // Helper function to format 24-hour time to 12-hour with AM/PM
 const formatTimeForDisplay = (time24h: string): string => {
@@ -146,6 +149,8 @@ const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> 
 
 const DigitalSign = () => {
   const [currentView, setCurrentView] = useState<'prayerTimes' | 'announcements'>('prayerTimes');
+  const [nextPrayerInfo, setNextPrayerInfo] = useState<{ name: string; time: Date } | null>(null);
+  const [countdown, setCountdown] = useState<string>("");
 
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
     queryKey: ["digitalSignSettings"],
@@ -172,8 +177,72 @@ const DigitalSign = () => {
     refetchOnWindowFocus: false,
   });
 
+  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
+
+  // Helper to format duration for countdown
+  const formatDuration = (ms: number) => {
+    if (ms < 0) return "00:00:00";
+
+    const seconds = Math.floor((ms / 1000) % 60);
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const hours = Math.floor((ms / (1000 * 60 * 60)));
+
+    const pad = (num: number) => num.toString().padStart(2, '0');
+
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  };
+
+  // Function to determine the next prayer time
+  const getNextPrayer = useCallback((apiData: PrayerTimesData, iqamahData: Record<string, string>) => {
+    const nowInChicago = utcToZonedTime(new Date(), TIMEZONE);
+    const todayInChicago = formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
+
+    const allPrayers: { name: string; time: Date }[] = [];
+
+    // Helper to create a Date object in the specified timezone for today
+    const createPrayerDateTime = (timeString: string, dateString: string) => {
+      // Parse the time string as if it's in Chicago time, then convert to UTC for consistent comparison
+      const dateTimeString = `${dateString}T${timeString}:00`; // Add seconds and T for ISO format
+      return zonedTimeToUtc(dateTimeString, TIMEZONE);
+    };
+
+    // Add daily prayers and Jumuah for today
+    prayerOrder.forEach(prayerName => {
+      let timeString = iqamahData[prayerName];
+      if (!timeString || timeString === "N/A") {
+        // Fallback to Adhan time if Iqamah is not set or N/A
+        timeString = apiData.data.timings[prayerName as keyof typeof apiData.data.timings];
+      }
+      if (timeString && timeString !== "N/A") {
+        const prayerDateTime = createPrayerDateTime(timeString, todayInChicago);
+        if (!isNaN(prayerDateTime.getTime())) {
+          allPrayers.push({ name: prayerName, time: prayerDateTime });
+        }
+      }
+    });
+
+    // Sort all prayers by time
+    allPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
+
+    // Find the next upcoming prayer for today
+    let next = allPrayers.find(p => p.time > nowInChicago);
+
+    // If no prayer found for today, get tomorrow's Fajr
+    if (!next && apiData) {
+      const tomorrowInChicago = formatInTimeZone(utcToZonedTime(new Date(nowInChicago.getTime() + 24 * 60 * 60 * 1000), TIMEZONE), TIMEZONE, 'yyyy-MM-dd');
+      const fajrTimeTomorrow = apiData.data.timings.Fajr;
+      if (fajrTimeTomorrow) {
+        const fajrDateTimeTomorrow = createPrayerDateTime(fajrTimeTomorrow, tomorrowInChicago);
+        if (!isNaN(fajrDateTimeTomorrow.getTime())) {
+          next = { name: "Fajr (Tomorrow)", time: fajrDateTimeTomorrow };
+        }
+      }
+    }
+    return next;
+  }, [prayerOrder]);
+
+  // Effect for automatic view rotation
   useEffect(() => {
-    // Use the rotation_interval_seconds from settings, default to 15 if not loaded or invalid
     const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
       ? settings.rotation_interval_seconds * 1000
       : 15000; // Default to 15 seconds
@@ -185,9 +254,46 @@ const DigitalSign = () => {
     }, intervalTime);
 
     return () => clearInterval(interval);
-  }, [settings]); // Re-run effect when settings change
+  }, [settings]);
 
-  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"]; // Added Jumuah
+  // Effect for countdown timer
+  useEffect(() => {
+    if (!prayerData) return;
+
+    const updateCountdown = () => {
+      const next = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
+      setNextPrayerInfo(next);
+
+      if (next) {
+        const nowInChicago = utcToZonedTime(new Date(), TIMEZONE);
+        const diff = next.time.getTime() - nowInChicago.getTime();
+
+        if (diff <= 0) {
+          // Prayer time has passed, re-calculate next prayer after a short delay
+          setCountdown("Time for prayer!");
+          setTimeout(() => {
+            const updatedNext = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
+            setNextPrayerInfo(updatedNext);
+            if (updatedNext) {
+              const newDiff = updatedNext.time.getTime() - utcToZonedTime(new Date(), TIMEZONE).getTime();
+              setCountdown(formatDuration(newDiff));
+            } else {
+              setCountdown("No more prayers today.");
+            }
+          }, 1000); // Wait 1 second before updating to "next"
+        } else {
+          setCountdown(formatDuration(diff));
+        }
+      } else {
+        setCountdown("No prayer data available.");
+      }
+    };
+
+    const intervalId = setInterval(updateCountdown, 1000);
+    updateCountdown(); // Initial call
+
+    return () => clearInterval(intervalId);
+  }, [prayerData, getNextPrayer]);
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
@@ -203,19 +309,13 @@ const DigitalSign = () => {
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden">
-      {/* Header Section - Simplified */}
-      <div className="text-center mb-12">
-        {/* Removed: Islamic Society of Evansville title */}
-        {/* Removed: Date (Gregorian and Hijri) */}
-      </div>
-
       {/* Dynamic Title for the current section */}
       <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">
         {currentView === 'prayerTimes' ? 'Prayer Times' : 'Announcements'}
       </h2>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col items-center justify-center relative">
+      <div className="flex-grow relative w-full max-w-5xl mx-auto">
         {currentView === 'prayerTimes' && (
           <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
             {isLoadingPrayer ? (
@@ -249,6 +349,14 @@ const DigitalSign = () => {
                     </span>
                   </div>
                 ))}
+                {/* Countdown Timer */}
+                <div className="mt-12 text-center">
+                  {nextPrayerInfo && (
+                    <p className="text-5xl font-bold text-accent">
+                      Next Prayer: {nextPrayerInfo.name} in {countdown}
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="text-4xl text-red-400">Failed to load prayer times.</p>
