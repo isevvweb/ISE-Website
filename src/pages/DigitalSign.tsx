@@ -192,8 +192,8 @@ const DigitalSign = () => {
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
   };
 
-  // Function to determine the next prayer time
-  const getNextPrayer = useCallback((apiData: PrayerTimesData, iqamahData: Record<string, string>) => {
+  // Memoized function to determine the next prayer time
+  const getNextPrayerCalculated = useCallback((apiData: PrayerTimesData, iqamahData: Record<string, string>) => {
     const nowInChicago = toZonedTime(new Date(), TIMEZONE);
     const todayInChicago = formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
     const isFriday = format(nowInChicago, 'EEEE') === 'Friday';
@@ -249,6 +249,13 @@ const DigitalSign = () => {
     return next;
   }, [prayerOrder]);
 
+  // Effect to set initial next prayer when prayerData loads or changes
+  useEffect(() => {
+    if (prayerData) {
+      setNextPrayerInfo(getNextPrayerCalculated(prayerData.apiTimes, prayerData.iqamahTimes));
+    }
+  }, [prayerData, getNextPrayerCalculated]);
+
   // Effect for automatic view rotation
   useEffect(() => {
     const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
@@ -264,58 +271,34 @@ const DigitalSign = () => {
     return () => clearInterval(interval);
   }, [settings]);
 
-  // Effect for countdown timer and next prayer determination
+  // Effect for countdown timer
   useEffect(() => {
-    if (!prayerData) return;
+    if (!nextPrayerInfo) {
+      setCountdown("Loading prayer times...");
+      return;
+    }
 
-    let intervalId: NodeJS.Timeout;
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    const calculateAndSetNextPrayer = () => {
-      const next = getNextPrayer(prayerData.apiTimes, prayerData.iqamahTimes);
-      setNextPrayerInfo(next);
-      return next;
-    };
-
-    // Initial calculation when prayerData is available
-    let currentNextPrayer = calculateAndSetNextPrayer();
-
-    const updateCountdown = () => {
-      if (!currentNextPrayer) {
-        setCountdown("No prayer data available.");
-        return;
-      }
-
+    const interval = setInterval(() => {
       const nowInChicago = toZonedTime(new Date(), TIMEZONE);
-      const diff = currentNextPrayer.time.getTime() - nowInChicago.getTime();
+      const diff = nextPrayerInfo.time.getTime() - nowInChicago.getTime();
 
       if (diff <= 0) {
         setCountdown("Time for prayer!");
-        // If prayer time has passed, recalculate next prayer after a short delay
-        if (timeoutId) clearTimeout(timeoutId); // Clear any existing timeout
-        timeoutId = setTimeout(() => {
-          currentNextPrayer = calculateAndSetNextPrayer(); // Recalculate
-          if (currentNextPrayer) {
-            const newDiff = currentNextPrayer.time.getTime() - toZonedTime(new Date(), TIMEZONE).getTime();
-            setCountdown(formatDuration(newDiff));
-          } else {
-            setCountdown("No more prayers today.");
+        // Trigger a re-calculation of the next prayer after a short delay
+        // This will cause the first useEffect to run again and update nextPrayerInfo
+        // which in turn will cause this useEffect to re-run and clear/restart the interval.
+        setTimeout(() => {
+          if (prayerData) { // Ensure prayerData is available for recalculation
+            setNextPrayerInfo(getNextPrayerCalculated(prayerData.apiTimes, prayerData.iqamahTimes));
           }
-          timeoutId = null; // Clear timeout ID after execution
-        }, 1000); // Wait 1 second before updating to "next"
+        }, 1000); // Give it a second before finding the *next* prayer
       } else {
         setCountdown(formatDuration(diff));
       }
-    };
+    }, 1000);
 
-    intervalId = setInterval(updateCountdown, 1000);
-    updateCountdown(); // Initial call to set countdown immediately
-
-    return () => {
-      clearInterval(intervalId);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [prayerData, getNextPrayer]); // getNextPrayer is a dependency because it's a useCallback
+    return () => clearInterval(interval);
+  }, [nextPrayerInfo, prayerData, getNextPrayerCalculated]); // Dependencies: nextPrayerInfo (to restart timer), prayerData (for recalculation), getNextPrayerCalculated (for stability)
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
