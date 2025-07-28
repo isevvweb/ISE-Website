@@ -45,18 +45,23 @@ serve(async (req) => {
       }
 
       const data = await response.json();
+      console.log(`Raw Google Calendar API response for ${calendarId}:`, JSON.stringify(data, null, 2)); // Log full response
       console.log(`Received ${data.items ? data.items.length : 0} events from calendar ${calendarId}.`);
+
       if (data.items) {
-        allEvents.push(...data.items.map((item: any) => ({
-          id: item.id,
-          title: item.summary,
-          description: item.description,
-          start: item.start?.dateTime || item.start?.date,
-          end: item.end?.dateTime || item.end?.date,
-          location: item.location,
-          htmlLink: item.htmlLink,
-          calendarId: calendarId // Add calendar ID for differentiation if needed
-        })));
+        allEvents.push(...data.items.map((item: any) => {
+          console.log(`Processing event: ${item.summary}, Start: ${item.start?.dateTime || item.start?.date}, End: ${item.end?.dateTime || item.end?.date}`); // Log individual event times
+          return {
+            id: item.id,
+            title: item.summary,
+            description: item.description,
+            start: item.start?.dateTime || item.start?.date,
+            end: item.end?.dateTime || item.end?.date,
+            location: item.location,
+            htmlLink: item.htmlLink,
+            calendarId: calendarId // Add calendar ID for differentiation if needed
+          };
+        }));
       }
     }
 
