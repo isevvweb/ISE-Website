@@ -198,39 +198,28 @@ const DigitalSign = () => {
     const todayInChicago = formatInTimeZone(nowInChicago, TIMEZONE, 'yyyy-MM-dd');
     const isFriday = format(nowInChicago, 'EEEE') === 'Friday';
 
-    console.log("--- getNextPrayer Debug ---");
-    console.log("Current time (Chicago):", nowInChicago.toISOString());
-    console.log("Is today Friday?", isFriday);
-
     const allPrayers: { name: string; time: Date }[] = [];
 
     // Helper to create a Date object in the specified timezone for today
     const createPrayerDateTime = (timeString: string, dateString: string) => {
       const dateTimeString = `${dateString}T${timeString}:00`;
-      const zonedDate = toZonedTime(dateTimeString, TIMEZONE);
-      console.log(`  Creating Date for ${timeString} on ${dateString}: ${zonedDate.toISOString()}`);
-      return zonedDate;
+      return toZonedTime(dateTimeString, TIMEZONE);
     };
 
     // Filter prayerOrder to include Jumuah only on Fridays
     const currentDayPrayerOrder = prayerOrder.filter(prayerName =>
       prayerName !== "Jumuah" || (prayerName === "Jumuah" && isFriday)
     );
-    console.log("Prayers considered for today:", currentDayPrayerOrder);
 
     currentDayPrayerOrder.forEach(prayerName => {
       let timeString: string | undefined;
 
       if (prayerName === "Jumuah") {
         timeString = iqamahData[prayerName];
-        console.log(`  Jumuah time from DB: ${timeString}`);
       } else {
         timeString = iqamahData[prayerName];
         if (!timeString || timeString === "N/A") {
           timeString = apiData.data.timings[prayerName as keyof typeof apiData.data.timings];
-          console.log(`  ${prayerName} time (fallback to API): ${timeString}`);
-        } else {
-          console.log(`  ${prayerName} time from DB: ${timeString}`);
         }
       }
 
@@ -238,31 +227,21 @@ const DigitalSign = () => {
         const prayerDateTime = createPrayerDateTime(timeString, todayInChicago);
         if (!isNaN(prayerDateTime.getTime())) {
           allPrayers.push({ name: prayerName, time: prayerDateTime });
-          console.log(`  Added ${prayerName}: ${prayerDateTime.toISOString()}`);
-        } else {
-          console.warn(`  Failed to create date for ${prayerName} with time ${timeString}`);
         }
-      } else {
-        console.log(`  ${prayerName} time is N/A or missing.`);
       }
     });
 
-    console.log("All populated prayers for today (unsorted):", allPrayers.map(p => `${p.name}: ${p.time.toISOString()}`));
-
     allPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
-    console.log("All populated prayers for today (sorted):", allPrayers.map(p => `${p.name}: ${p.time.toISOString()}`));
 
-    let next = null;
-    for (const p of allPrayers) {
-      console.log(`  Comparing ${p.name} (${p.time.toISOString()}) > Current (${nowInChicago.toISOString()}): ${p.time > nowInChicago}`);
-      if (p.time > nowInChicago) {
-        next = p;
-        break;
-      }
-    }
-    console.log("Next prayer found for today:", next ? `${next.name}: ${next.time.toISOString()}` : "None");
+    console.log("--- getNextPrayer Debug ---");
+    console.log("Current time (Chicago):", nowInChicago.toISOString());
+    console.log("All sorted prayer times for today:");
+    allPrayers.forEach(p => {
+      console.log(`  ${p.name}: ${p.time.toISOString()}`);
+    });
 
-    // If no prayer found for today, get tomorrow's Fajr
+    let next = allPrayers.find(p => p.time > nowInChicago);
+
     if (!next && apiData) {
       const tomorrow = addDays(nowInChicago, 1);
       const tomorrowInChicago = formatInTimeZone(tomorrow, TIMEZONE, 'yyyy-MM-dd');
@@ -271,10 +250,10 @@ const DigitalSign = () => {
         const fajrDateTimeTomorrow = createPrayerDateTime(fajrTimeTomorrow, tomorrowInChicago);
         if (!isNaN(fajrDateTimeTomorrow.getTime())) {
           next = { name: "Fajr (Tomorrow)", time: fajrDateTimeTomorrow };
-          console.log("Next prayer is tomorrow's Fajr:", next.time.toISOString());
         }
       }
     }
+    console.log("Next prayer identified:", next ? `${next.name}: ${next.time.toISOString()}` : "None");
     console.log("--- End getNextPrayer Debug ---");
     return next;
   }, [prayerOrder]);
