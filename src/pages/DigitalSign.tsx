@@ -187,7 +187,7 @@ const DigitalSign = () => {
     return () => clearInterval(interval);
   }, [settings]); // Re-run effect when settings change
 
-  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"]; // Added Jumuah
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
@@ -215,12 +215,12 @@ const DigitalSign = () => {
       </h2>
 
       {/* Main Content Area */}
-      <div className="flex-grow relative w-full max-w-5xl mx-auto">
+      <div className="flex-grow flex flex-col items-center justify-center relative">
         {currentView === 'prayerTimes' && (
           <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
             {isLoadingPrayer ? (
               <div className="space-y-10 w-full max-w-3xl">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(6)].map((_, i) => ( // Increased skeleton count for Jumuah
                   <div key={i} className="grid grid-cols-3 gap-10 items-center">
                     <Skeleton className="h-20 w-full bg-gray-700" />
                     <Skeleton className="h-20 w-full bg-gray-700" />
@@ -241,19 +241,14 @@ const DigitalSign = () => {
                   <div key={prayer} className="grid grid-cols-3 gap-10 py-8 border-b border-gray-700 last:border-b-0">
                     <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
                     <span className="text-5xl text-gray-400 text-center">
-                      {formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer])}
+                      {/* For Jumuah, Adhan time is not applicable from API, so display N/A or empty */}
+                      {prayer === "Jumuah" ? "N/A" : formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer as keyof typeof prayerData.apiTimes.data.timings])}
                     </span>
                     <span className="text-6xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
                 ))}
-                <div className="grid grid-cols-3 gap-10 py-8 mt-10">
-                  <span className="text-6xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span>
-                  <span className="text-5xl font-bold text-primary-foreground text-right">
-                      {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
-                  </span>
-                </div>
               </div>
             ) : (
               <p className="text-4xl text-red-400">Failed to load prayer times.</p>
