@@ -244,7 +244,7 @@ const DigitalSign = () => {
                 <div className="grid grid-cols-3 gap-10 py-8 mt-10"> {/* Increased gap, padding-y, margin-top */}
                   <span className="text-6xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span> {/* Increased font size */}
                   <span className="text-5xl font-bold text-primary-foreground text-right"> {/* Increased font size */}
-                    {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
+                      {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
                   </span>
                 </div>
               </div>
