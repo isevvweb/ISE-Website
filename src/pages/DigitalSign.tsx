@@ -203,14 +203,10 @@ const DigitalSign = () => {
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden">
-      {/* Header Section */}
+      {/* Header Section - Simplified */}
       <div className="text-center mb-12">
-        <h1 className="text-8xl font-extrabold text-primary-foreground leading-tight">
-          Islamic Society of Evansville
-        </h1>
-        <p className="text-5xl text-gray-300 mt-6">
-          {prayerData?.apiTimes.data.date.readable} ({prayerData?.apiTimes.data.date.hijri.date} Hijri)
-        </p>
+        {/* Removed: Islamic Society of Evansville title */}
+        {/* Removed: Date (Gregorian and Hijri) */}
       </div>
 
       {/* Toggle Button */}
@@ -309,10 +305,9 @@ const DigitalSign = () => {
         )}
       </div>
 
-      {/* Footer Section */}
+      {/* Footer Section - Removed content */}
       <div className="text-center mt-12 text-4xl text-gray-400">
-        <p>Islamic Society of Evansville | 4200 Grimm Road, Newburgh, IN</p>
-        <p>www.isevv.org</p>
+        {/* Removed: Address and website */}
       </div>
     </div>
   );
