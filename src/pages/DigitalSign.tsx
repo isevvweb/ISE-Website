@@ -158,13 +158,13 @@ const DigitalSign = () => {
   }
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-4 sm:p-8 font-sans overflow-hidden">
+    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-12 font-sans overflow-hidden">
       {/* Header Section */}
-      <div className="text-center mb-4 sm:mb-8">
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-primary-foreground leading-tight">
+      <div className="text-center mb-8">
+        <h1 className="text-7xl font-extrabold text-primary-foreground leading-tight">
           Islamic Society of Evansville
         </h1>
-        <p className="text-2xl sm:text-3xl text-gray-300 mt-2">
+        <p className="text-4xl text-gray-300 mt-4">
           {prayerData?.apiTimes.data.date.readable} ({prayerData?.apiTimes.data.date.hijri.date} Hijri)
         </p>
       </div>
@@ -172,72 +172,79 @@ const DigitalSign = () => {
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col items-center justify-center relative">
         {currentView === 'prayerTimes' && (
-          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-6 sm:p-8 shadow-lg animate-fade-in">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-primary-foreground">Prayer Times</h2>
+          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-16 shadow-lg animate-fade-in">
+            <h2 className="text-6xl font-bold mb-10 text-primary-foreground">Prayer Times</h2>
             {isLoadingPrayer ? (
-              <div className="space-y-4 w-full max-w-md">
+              <div className="space-y-8 w-full max-w-2xl">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <Skeleton className="h-10 w-32 bg-gray-700" />
-                    <Skeleton className="h-10 w-24 bg-gray-700" />
-                    <Skeleton className="h-10 w-24 bg-gray-700" />
+                  <div key={i} className="grid grid-cols-3 gap-8 items-center">
+                    <Skeleton className="h-16 w-full bg-gray-700" />
+                    <Skeleton className="h-16 w-full bg-gray-700" />
+                    <Skeleton className="h-16 w-full bg-gray-700" />
                   </div>
                 ))}
               </div>
             ) : prayerData ? (
-              <div className="w-full max-w-md">
+              <div className="w-full max-w-2xl">
+                {/* Table Header (Implicit) */}
+                <div className="grid grid-cols-3 gap-8 pb-4 border-b-4 border-gray-600 mb-6">
+                  <span className="text-4xl font-bold text-gray-400 text-left">Prayer</span>
+                  <span className="text-4xl font-bold text-gray-400 text-center">Adhan</span>
+                  <span className="text-4xl font-bold text-gray-400 text-right">Iqamah</span>
+                </div>
+                {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
-                  <div key={prayer} className="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0">
-                    <span className="text-3xl sm:text-4xl font-semibold text-gray-200">{prayer}</span>
-                    <span className="text-2xl sm:text-3xl text-gray-400">
+                  <div key={prayer} className="grid grid-cols-3 gap-8 py-6 border-b border-gray-700 last:border-b-0">
+                    <span className="text-5xl font-semibold text-gray-200 text-left">{prayer}</span>
+                    <span className="text-4xl text-gray-400 text-center">
                       {formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer as keyof typeof prayerData.apiTimes.data.timings])}
                     </span>
-                    <span className="text-2xl sm:text-3xl font-medium text-primary-foreground">
+                    <span className="text-4xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
                 ))}
-                <div className="flex justify-between items-center py-3 mt-4">
-                  <span className="text-3xl sm:text-4xl font-semibold text-gray-200">Jumu'ah</span>
-                  <span className="text-2xl sm:text-3xl font-medium text-primary-foreground">
+                <div className="grid grid-cols-3 gap-8 py-6 mt-6">
+                  <span className="text-5xl font-semibold text-gray-200 text-left col-span-2">Jumu'ah</span>
+                  <span className="text-4xl font-bold text-primary-foreground text-right">
                     {formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}
                   </span>
                 </div>
               </div>
             ) : (
-              <p className="text-xl sm:text-2xl text-red-400">Failed to load prayer times.</p>
+              <p className="text-3xl text-red-400">Failed to load prayer times.</p>
             )}
           </div>
         )}
 
         {currentView === 'announcements' && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-6 sm:p-8 shadow-lg animate-fade-in">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-primary-foreground text-center">Announcements</h2>
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-16 shadow-lg animate-fade-in">
+            <h2 className="text-6xl font-bold mb-10 text-primary-foreground text-center">Announcements</h2>
             {isLoadingAnnouncements ? (
-              <div className="space-y-6 flex-grow flex flex-col justify-center">
-                <Skeleton className="h-12 w-3/4 mx-auto bg-gray-700" />
-                <Skeleton className="h-40 w-full bg-gray-700" />
-                <Skeleton className="h-8 w-1/2 mx-auto bg-gray-700" />
+              <div className="space-y-10 flex-grow flex flex-col justify-center">
+                <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
+                <Skeleton className="h-64 w-full bg-gray-700" />
+                <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-6">
+              <div className="flex-grow flex flex-col justify-center space-y-10">
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
-                    <h3 className="text-3xl sm:text-4xl font-semibold text-gray-100 mb-2">{announcement.title}</h3>
-                    <p className="text-xl sm:text-2xl text-gray-300 mb-4">{announcement.description}</p>
+                    <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
+                    <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     {announcement.image_url && (
-                      <div className="w-full max-h-64 overflow-hidden rounded-md mx-auto mb-2">
-                        <img src={announcement.image_url} alt={announcement.title} className="w-full h-full object-contain" />
+                      <div className="w-full h-96 overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
+                        <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
-                    <p className="text-lg sm:text-xl text-gray-400">
+                    <p className="text-2xl text-gray-400">
                       {format(parseISO(announcement.announcement_date), "PPP")}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xl sm:text-2xl text-center text-gray-400 flex-grow flex items-center justify-center">
+              <p className="text-3xl text-center text-gray-400 flex-grow flex items-center justify-center">
                 No active announcements at this time.
               </p>
             )}
@@ -246,7 +253,7 @@ const DigitalSign = () => {
       </div>
 
       {/* Footer Section */}
-      <div className="text-center mt-4 sm:mt-8 text-xl sm:text-2xl text-gray-400">
+      <div className="text-center mt-8 text-3xl text-gray-400">
         <p>Islamic Society of Evansville | 4200 Grimm Road, Newburgh, IN</p>
         <p>www.isevv.org</p>
       </div>
