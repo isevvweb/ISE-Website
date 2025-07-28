@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Clock, FileText, Users, DollarSign, CalendarCheck, ListChecks } from "lucide-react"; // Import ListChecks icon
+import { Bell, Clock, FileText, Users, DollarSign, CalendarCheck, ListChecks, Monitor } from "lucide-react"; // Import Monitor icon
 
 const AdminDashboard = () => {
   const adminSections = [
@@ -11,7 +11,8 @@ const AdminDashboard = () => {
     { title: "Leadership", description: "Manage Board Members and Trustees.", path: "/admin/leadership", icon: Users },
     { title: "Donation Causes", description: "Add or remove donation causes.", path: "/admin/donation-causes", icon: DollarSign },
     { title: "Youth Events", description: "Manage past youth events and galleries.", path: "/admin/youth-events", icon: CalendarCheck },
-    { title: "Youth Subprograms", description: "Manage detailed subprograms for youth activities.", path: "/admin/youth-subprograms", icon: ListChecks }, // New section
+    { title: "Youth Subprograms", description: "Manage detailed subprograms for youth activities.", path: "/admin/youth-subprograms", icon: ListChecks },
+    { title: "Digital Sign Settings", description: "Configure the public digital display.", path: "/admin/digital-sign-settings", icon: Monitor }, // New section
   ];
 
   return (

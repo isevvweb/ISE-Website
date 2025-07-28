@@ -34,8 +34,9 @@ import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
+import DigitalSignSettingsAdmin from "@/pages/Admin/DigitalSignSettingsAdmin.tsx"; // Import new admin page
 import Search from "./pages/Search";
-import DigitalSign from "./pages/DigitalSign"; // Import the new DigitalSign page
+import DigitalSign from "./pages/DigitalSign";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
             <Route path="youth-events" element={<YouthEventsAdmin />} />
             <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
+            <Route path="digital-sign-settings" element={<DigitalSignSettingsAdmin />} /> {/* New route */}
           </Route>
 
           {/* Digital Sign Route (no header/footer) */}

@@ -62,6 +62,13 @@ interface Announcement {
   posted_at?: string;
 }
 
+interface DigitalSignSettings {
+  id: string;
+  max_announcements: number;
+  show_descriptions: boolean;
+  show_images: boolean;
+}
+
 // Helper function to format 24-hour time to 12-hour with AM/PM
 const formatTimeForDisplay = (time24h: string): string => {
   if (!time24h || time24h === "N/A") return "N/A";
@@ -105,13 +112,29 @@ const fetchPrayerTimesAndIqamah = async (): Promise<{
   return { apiTimes: apiData, iqamahTimes: iqamahTimesMap };
 };
 
-const fetchActiveAnnouncements = async (): Promise<Announcement[]> => {
+const fetchDigitalSignSettings = async (): Promise<DigitalSignSettings> => {
+  const { data, error } = await supabase
+    .from("digital_sign_settings")
+    .select("*")
+    .single();
+
+  if (error) {
+    // If settings don't exist, return defaults
+    console.warn("Digital sign settings not found, using defaults:", error.message);
+    return { id: '00000000-0000-0000-0000-000000000001', max_announcements: 3, show_descriptions: true, show_images: true };
+  }
+  return data;
+};
+
+const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> => {
+  if (limit <= 0) return []; // If limit is 0 or less, return empty array
+
   const { data, error } = await supabase
     .from("announcements")
     .select("*")
     .eq("is_active", true)
     .order("posted_at", { ascending: false })
-    .limit(3); // Limit to a few recent announcements for the sign
+    .limit(limit);
 
   if (error) {
     throw new Error("Error fetching announcements: " + error.message);
@@ -121,6 +144,31 @@ const fetchActiveAnnouncements = async (): Promise<Announcement[]> => {
 
 const DigitalSign = () => {
   const [currentView, setCurrentView] = useState<'prayerTimes' | 'announcements'>('prayerTimes');
+
+  const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
+    queryKey: ["digitalSignSettings"],
+    queryFn: fetchDigitalSignSettings,
+    staleTime: 1000 * 60 * 5, // Settings considered fresh for 5 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: prayerData, isLoading: isLoadingPrayer, error: prayerError } = useQuery({
+    queryKey: ["prayerTimesAndIqamah"],
+    queryFn: fetchPrayerTimesAndIqamah,
+    staleTime: 1000 * 60 * 60 * 12, // Data considered fresh for 12 hours
+    refetchInterval: 1000 * 60 * 60, // Refetch every hour
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: announcements, isLoading: isLoadingAnnouncements, error: announcementsError } = useQuery({
+    queryKey: ["activeAnnouncements", settings?.max_announcements], // Depend on settings for limit
+    queryFn: () => fetchActiveAnnouncements(settings?.max_announcements || 0),
+    enabled: !!settings, // Only run if settings are loaded
+    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -132,22 +180,6 @@ const DigitalSign = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const { data: prayerData, isLoading: isLoadingPrayer, error: prayerError } = useQuery({
-    queryKey: ["prayerTimesAndIqamah"],
-    queryFn: fetchPrayerTimesAndIqamah,
-    staleTime: 1000 * 60 * 60 * 12, // Data considered fresh for 12 hours
-    refetchInterval: 1000 * 60 * 60, // Refetch every hour
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: announcements, isLoading: isLoadingAnnouncements, error: announcementsError } = useQuery({
-    queryKey: ["activeAnnouncements"],
-    queryFn: fetchActiveAnnouncements,
-    staleTime: 1000 * 60 * 5, // Data considered fresh for 5 minutes
-    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
-    refetchOnWindowFocus: false,
-  });
-
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
   if (prayerError) {
@@ -156,6 +188,11 @@ const DigitalSign = () => {
   if (announcementsError) {
     showError("Error loading announcements for sign: " + announcementsError.message);
   }
+  if (settingsError) {
+    showError("Error loading digital sign settings: " + settingsError.message);
+  }
+
+  const showAnnouncementsSection = settings && settings.max_announcements > 0 && announcements && announcements.length > 0;
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-12 font-sans overflow-hidden">
@@ -217,10 +254,10 @@ const DigitalSign = () => {
           </div>
         )}
 
-        {currentView === 'announcements' && (
+        {currentView === 'announcements' && showAnnouncementsSection && (
           <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-16 shadow-lg animate-fade-in">
             <h2 className="text-6xl font-bold mb-10 text-primary-foreground text-center">Announcements</h2>
-            {isLoadingAnnouncements ? (
+            {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
                 <Skeleton className="h-64 w-full bg-gray-700" />
@@ -231,8 +268,10 @@ const DigitalSign = () => {
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
                     <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
-                    <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
-                    {announcement.image_url && (
+                    {settings?.show_descriptions && (
+                      <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
+                    )}
+                    {settings?.show_images && announcement.image_url && (
                       <div className="w-full h-96 overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
@@ -245,7 +284,7 @@ const DigitalSign = () => {
               </div>
             ) : (
               <p className="text-3xl text-center text-gray-400 flex-grow flex items-center justify-center">
-                No active announcements at this time.
+                No active announcements to display.
               </p>
             )}
           </div>
