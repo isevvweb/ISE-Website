@@ -110,7 +110,7 @@ export const useNextPrayerCountdown = (
         const minutes = Math.floor((diffSeconds % 3600) / 60);
         const seconds = diffSeconds % 60;
 
-        const countdownString = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}s`; // Removed seconds for brevity
+        const countdownString = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
 
         foundNextPrayer = {
           ...prayer,
