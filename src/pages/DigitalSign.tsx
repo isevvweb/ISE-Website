@@ -450,19 +450,19 @@ const DigitalSign = () => {
               <div className="w-full max-w-3xl">
                 {/* Table Header (Implicit) */}
                 <div className="grid grid-cols-3 gap-8 pb-4 border-b-4 border-gray-600 mb-6">
-                  <span className="text-5xl font-bold text-gray-400 text-left">Prayer</span>
-                  <span className="text-5xl font-bold text-gray-400 text-center">Adhan</span>
-                  <span className="text-5xl font-bold text-gray-400 text-right">Iqamah</span>
+                  <span className="text-6xl font-bold text-gray-400 text-left">Prayer</span>
+                  <span className="text-6xl font-bold text-gray-400 text-center">Adhan</span>
+                  <span className="text-6xl font-bold text-gray-400 text-right">Iqamah</span>
                 </div>
                 {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
                   <div key={prayer} className="grid grid-cols-3 gap-8 py-6 border-b border-gray-700 last:border-b-0">
-                    <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
-                    <span className="text-5xl text-gray-400 text-center">
+                    <span className="text-7xl font-semibold text-gray-200 text-left">{prayer}</span>
+                    <span className="text-6xl text-gray-400 text-center">
                       {/* For Jumuah, Adhan time is not applicable from API, so display N/A or empty */}
                       {prayer === "Jumuah" ? "N/A" : formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer as keyof typeof prayerData.apiTimes.data.timings])}
                     </span>
-                    <span className="text-6xl font-bold text-primary-foreground text-right">
+                    <span className="text-7xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
@@ -498,18 +498,18 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-10 overflow-y-auto"> {/* Increased space-y */}
+              <div className="flex-grow flex flex-col justify-center space-y-12 overflow-y-auto"> {/* Increased space-y */}
                 {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
-                  <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
-                    <CardHeader className="p-0 mb-4"> {/* Increased mb */}
-                      <CardTitle className="text-5xl font-semibold text-primary-foreground">{event.title}</CardTitle> {/* Increased font size */}
-                      <p className="text-3xl text-gray-300"> {/* Increased font size */}
+                  <Card key={event.id} className="bg-gray-700 text-white p-8 rounded-lg shadow-md"> {/* Increased padding */}
+                    <CardHeader className="p-0 mb-6"> {/* Increased mb */}
+                      <CardTitle className="text-6xl font-semibold text-primary-foreground">{event.title}</CardTitle> {/* Increased font size */}
+                      <p className="text-4xl text-gray-300"> {/* Increased font size */}
                         {format(parseISO(event.start), 'MMM dd, yyyy hh:mm a')}
                         {event.end && ` - ${format(parseISO(event.end), 'hh:mm a')}`}
                       </p>
                     </CardHeader>
-                    <CardContent className="p-0 text-3xl text-gray-400"> {/* Increased font size */}
-                      {event.description && <p className="mb-4 line-clamp-3">{event.description}</p>} {/* Increased mb and line-clamp */}
+                    <CardContent className="p-0 text-4xl text-gray-400"> {/* Increased font size */}
+                      {event.description && <p className="mb-6 line-clamp-3">{event.description}</p>} {/* Increased mb and line-clamp */}
                       {event.location && <p className="font-medium">Location: {event.location}</p>}
                     </CardContent>
                   </Card>
