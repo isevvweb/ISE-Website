@@ -535,12 +535,12 @@ const DigitalSign = () => {
       {/* Footer Section with Next Prayer Countdown */}
       <div className="text-center mt-12 text-4xl text-gray-400">
         {nextAdhanInfo && (
-          <p className="text-7xl font-bold text-accent mb-4">
+          <p className="text-8xl font-bold text-accent mb-6">
             {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
           </p>
         )}
         {nextAdhanInfo && (
-          <p className="text-7xl font-extrabold text-primary-foreground">
+          <p className="text-8xl font-extrabold text-primary-foreground">
             {nextAdhanInfo.countdown}
           </p>
         )}
