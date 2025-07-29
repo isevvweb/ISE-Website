@@ -14,10 +14,9 @@ const WhatsAppQRSection: React.FC<WhatsAppQRSectionProps> = ({ communityQrUrl, y
         <h3 className="text-5xl font-bold text-primary-foreground mb-6 text-center">
           Join Our Community WhatsApp Group
         </h3>
-        <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-white p-4 rounded-lg flex items-center justify-center">
+        <div className="w-80 h-80 md:w-96 md:h-96 lg:w-[500px] lg:h-[500px] bg-white p-4 rounded-lg flex items-center justify-center">
           <img src={communityQrUrl} alt="Community WhatsApp QR Code" className="w-full h-full object-contain" />
         </div>
-        <p className="text-3xl text-gray-300 mt-6 text-center">Scan to join for general updates & discussions.</p>
       </div>
 
       {/* Bottom Half: Youth Group QR */}
@@ -25,10 +24,9 @@ const WhatsAppQRSection: React.FC<WhatsAppQRSectionProps> = ({ communityQrUrl, y
         <h3 className="text-5xl font-bold text-primary-foreground mb-6 text-center">
           Join Our Youth WhatsApp Group
         </h3>
-        <div className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 bg-white p-4 rounded-lg flex items-center justify-center">
+        <div className="w-80 h-80 md:w-96 md:h-96 lg:w-[500px] lg:h-[500px] bg-white p-4 rounded-lg flex items-center justify-center">
           <img src={youthQrUrl} alt="Youth WhatsApp QR Code" className="w-full h-full object-contain" />
         </div>
-        <p className="text-3xl text-gray-300 mt-6 text-center">Scan to join for youth-specific events & activities.</p>
       </div>
     </div>
   );
