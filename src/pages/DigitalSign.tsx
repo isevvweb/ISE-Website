@@ -375,15 +375,14 @@ const DigitalSign = () => {
           setReminderText("Adhan is now!");
           setLastPlayedExactAdhanPrayer(nextAdhanInfo.name);
 
-          // Set a timeout to dismiss the "Adhan is now!" reminder after 1 minute
-          // This acts as a fallback if the audio 'ended' event doesn't fire or is shorter than 1 min.
+          // Set a timeout to dismiss the "Adhan is now!" reminder after 4 minutes and 31 seconds (271,000 ms)
           setTimeout(() => {
             if (reminderText === "Adhan is now!") { // Ensure we're dismissing the correct reminder
               setShowAdhanReminder(false);
               setReminderPrayerName(null);
               setReminderText("");
             }
-          }, 60000); // Dismiss after 1 minute
+          }, 271000); // Dismiss after 4 minutes and 31 seconds
         }
       } else if (diffInSeconds < -5 && nextAdhanInfo.name === lastPlayedExactAdhanPrayer) {
         setLastPlayedExactAdhanPrayer(null);
