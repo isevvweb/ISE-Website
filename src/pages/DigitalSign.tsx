@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNextPrayerCountdown } from "@/hooks/useNextPrayerCountdown";
 import AdhanReminder from "@/components/AdhanReminder";
-import WhatsAppQRSection from "@/components/WhatsAppQRSection"; // Import the new component
+import WhatsAppQRSection from "@/components/WhatsAppQRSection";
+import DigitalSignAnnouncementCard from "@/components/DigitalSignAnnouncementCard";
 
 interface PrayerTimesData {
   code: number;
@@ -176,6 +177,28 @@ const fetchUpcomingEvents = async (): Promise<CalendarEvent[]> => {
   return data.events || [];
 };
 
+// Define specific types for each kind of view item
+interface BaseViewItem {
+  id: string;
+  title: string;
+  component: 'PrayerTimesView' | 'UpcomingEventsView' | 'WhatsAppQRView';
+  show: boolean;
+}
+
+interface AnnouncementViewItem {
+  id: string; // e.g., `announcement-${announcement.id}`
+  title: string;
+  component: 'AnnouncementView';
+  data: Announcement; // Specific data for announcements
+  show: boolean;
+}
+
+// Union type for all possible view items
+type DigitalSignViewItem =
+  | BaseViewItem
+  | AnnouncementViewItem;
+
+
 const DigitalSign = () => {
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
   const [showAdhanReminder, setShowAdhanReminder] = useState(false);
@@ -236,13 +259,32 @@ const DigitalSign = () => {
 
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
-  // Define the views to rotate through
-  const views = [
-    { id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView', show: true },
-    { id: 'announcements', title: 'Announcements', component: 'AnnouncementsView', show: settings && settings.max_announcements > 0 && announcements && announcements.length > 0 },
-    { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView', show: upcomingEvents && upcomingEvents.length > 0 },
-    { id: 'whatsappQRs', title: 'Connect with Our Community', component: 'WhatsAppQRView', show: true }, // Updated title
-  ].filter(view => view.show); // Filter out views that shouldn't be shown
+  // Dynamically define the views to rotate through
+  const views: DigitalSignViewItem[] = React.useMemo(() => {
+    const baseViews: BaseViewItem[] = [
+      { id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView' as const, show: true },
+      { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView' as const, show: upcomingEvents && upcomingEvents.length > 0 },
+      { id: 'whatsappQRs', title: 'Connect with Our Community', component: 'WhatsAppQRView' as const, show: true },
+    ].filter(view => view.show);
+
+    const announcementViews: AnnouncementViewItem[] = (settings && announcements && settings.max_announcements > 0)
+      ? announcements.slice(0, settings.max_announcements).map((announcement, index) => ({
+          id: `announcement-${announcement.id}`,
+          title: `Announcement ${index + 1}`, // Or announcement.title if preferred
+          component: 'AnnouncementView' as const,
+          data: announcement, // Pass the full announcement object
+          show: true,
+        }))
+      : [];
+
+    return [...baseViews, ...announcementViews];
+  }, [settings, announcements, upcomingEvents]);
+
+  // Effect to reset currentViewIndex if the number of views changes
+  useEffect(() => {
+    setCurrentViewIndex(0);
+  }, [views.length]);
+
 
   // Effect to initialize audio and handle 'ended' event
   useEffect(() => {
@@ -367,26 +409,26 @@ const DigitalSign = () => {
     showError("Error loading digital sign settings: " + settingsError.message);
   }
 
-  const currentView = views[currentViewIndex]?.id;
+  const currentView = views[currentViewIndex];
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-6 font-sans overflow-hidden"> {/* Reduced overall padding to p-6 */}
+    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-6 font-sans overflow-hidden">
       {showAdhanReminder && reminderPrayerName && (
         <AdhanReminder prayerName={reminderPrayerName} timeRemainingText={reminderText} onClose={() => setShowAdhanReminder(false)} />
       )}
 
       {/* Dynamic Title for the current section */}
       <h2 className="text-6xl font-bold mb-8 text-primary-foreground text-center">
-        {views[currentViewIndex]?.title || 'Loading...'}
+        {currentView?.title || 'Loading...'}
       </h2>
 
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col items-center justify-center relative">
-        {currentView === 'prayerTimes' && (
+        {currentView?.component === 'PrayerTimesView' && (
           <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             {isLoadingPrayer ? (
               <div className="space-y-10 w-full max-w-3xl">
-                {[...Array(6)].map((_, i) => ( // Increased skeleton count for Jumuah
+                {[...Array(6)].map((_, i) => (
                   <div key={i} className="grid grid-cols-3 gap-10 items-center">
                     <Skeleton className="h-20 w-full bg-gray-700" />
                     <Skeleton className="h-20 w-full bg-gray-700" />
@@ -422,42 +464,21 @@ const DigitalSign = () => {
           </div>
         )}
 
-        {currentView === 'announcements' && views[currentViewIndex]?.show && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-8 shadow-lg animate-fade-in"> {/* Increased padding to p-8 */}
+        {currentView?.component === 'AnnouncementView' && settings && (currentView as AnnouncementViewItem).data && (
+          <div key={currentView.id} className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-8 shadow-lg animate-fade-in">
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
                 <Skeleton className="h-64 w-full bg-gray-700" />
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
-            ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-evenly">
-                {announcements.map((announcement, index) => (
-                  <div key={announcement.id} className="text-center flex flex-col h-full">
-                    <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
-                    {settings?.show_descriptions && (
-                      <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
-                    )}
-                    {settings?.show_images && announcement.image_url && (
-                      <div className="w-full max-h-[60vh] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center"> {/* Changed to max-h-[60vh] */}
-                        <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
-                      </div>
-                    )}
-                    <p className="text-2xl text-gray-400">
-                      {format(parseISO(announcement.announcement_date), "PPP")}
-                    </p>
-                  </div>
-                ))}
-              </div>
             ) : (
-              <p className="text-4xl text-center text-gray-400 flex-grow flex items-center justify-center">
-                No active announcements to display.
-              </p>
+              <DigitalSignAnnouncementCard announcement={(currentView as AnnouncementViewItem).data} settings={settings} />
             )}
           </div>
         )}
 
-        {currentView === 'upcomingEvents' && views[currentViewIndex]?.show && (
+        {currentView?.component === 'UpcomingEventsView' && currentView.show && (
           <div key="upcoming-events-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             {isLoadingEvents ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
@@ -492,10 +513,10 @@ const DigitalSign = () => {
           </div>
         )}
 
-        {currentView === 'whatsappQRs' && views[currentViewIndex]?.show && (
+        {currentView?.component === 'WhatsAppQRView' && currentView.show && (
           <div key="whatsapp-qr-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             <WhatsAppQRSection
-              communityQrUrl="/community-linktree-qr.png" // Assuming you'll provide this single QR code image
+              communityQrUrl="/community-linktree-qr.png"
             />
           </div>
         )}
