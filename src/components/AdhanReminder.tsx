@@ -1,20 +1,15 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { BellRing } from "lucide-react";
 
 interface AdhanReminderProps {
   prayerName: string;
-  timeRemainingText: string; // New prop for custom text
-  onClose: () => void;
+  timeRemainingText: string;
+  onClose: () => void; // Keep onClose, but it will be triggered by parent
 }
 
 const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, timeRemainingText, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 30000); // Automatically close after 30 seconds
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
+  // Removed the useEffect with setTimeout here.
+  // The parent component (DigitalSign) will now manage the dismissal.
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground animate-fade-in">

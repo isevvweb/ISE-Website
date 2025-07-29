@@ -331,7 +331,7 @@ const DigitalSign = () => {
             setReminderPrayerName(null);
             setReminderText("");
           }
-        }, 8000);
+        }, 30000); // Dismiss after 30 seconds
         return;
       } else if (diffInSeconds < -60 && oneHourBeforeAdhanInfo.name === lastReminded1HourPrayerName) {
         setLastReminded1HourPrayerName(null);
@@ -353,14 +353,14 @@ const DigitalSign = () => {
             setReminderPrayerName(null);
             setReminderText("");
           }
-        }, 8000);
+        }, 30000); // Dismiss after 30 seconds
         return;
       } else if (diffInSeconds <= 0 && nextAdhanInfo.name === lastReminded10MinPrayerName) {
         setLastReminded10MinPrayerName(null);
       }
     }
 
-    // Logic for exact Adhan playback
+    // Logic for exact Adhan playback and reminder
     if (nextAdhanInfo && nextAdhanInfo.name !== "Jumuah") {
       const diffInSeconds = differenceInSeconds(nextAdhanInfo.time, now);
       if (diffInSeconds <= 0 && diffInSeconds > -5 && nextAdhanInfo.name !== lastPlayedExactAdhanPrayer) {
@@ -373,7 +373,16 @@ const DigitalSign = () => {
           setReminderPrayerName(nextAdhanInfo.name);
           setReminderText("Adhan is now!");
           setLastPlayedExactAdhanPrayer(nextAdhanInfo.name);
-          // The 'ended' event listener will handle closing this reminder.
+
+          // Set a timeout to dismiss the "Adhan is now!" reminder after 1 minute
+          // This acts as a fallback if the audio 'ended' event doesn't fire or is shorter than 1 min.
+          setTimeout(() => {
+            if (reminderText === "Adhan is now!") { // Ensure we're dismissing the correct reminder
+              setShowAdhanReminder(false);
+              setReminderPrayerName(null);
+              setReminderText("");
+            }
+          }, 60000); // Dismiss after 1 minute
         }
       } else if (diffInSeconds < -5 && nextAdhanInfo.name === lastPlayedExactAdhanPrayer) {
         setLastPlayedExactAdhanPrayer(null);
