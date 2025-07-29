@@ -431,7 +431,7 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-8">
+              <div className="flex-grow flex flex-col justify-evenly"> {/* Changed to justify-evenly */}
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
                     <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
