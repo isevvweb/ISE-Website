@@ -421,15 +421,6 @@ const DigitalSign = () => {
 
   const currentView = views[currentViewIndex];
 
-  // Removed handlePlayAdhan as the button is being removed
-  // const handlePlayAdhan = () => {
-  //   if (adhanAudioRef.current) {
-  //     adhanAudioRef.current.pause(); // Stop any current playback
-  //     adhanAudioRef.current.currentTime = 0; // Rewind to start
-  //     adhanAudioRef.current.play().catch(e => console.error("Error playing Adhan audio manually:", e));
-  //   }
-  // };
-
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-6 font-sans overflow-hidden">
       {showAdhanReminder && reminderPrayerName && (
@@ -437,7 +428,7 @@ const DigitalSign = () => {
       )}
 
       {/* Dynamic Title for the current section */}
-      <h2 className="text-6xl font-bold mb-8 text-primary-foreground text-center">
+      <h2 className="text-7xl font-bold mb-10 text-primary-foreground text-center">
         {currentView?.title || 'Loading...'}
       </h2>
 
@@ -459,26 +450,26 @@ const DigitalSign = () => {
               <div className="w-full max-w-3xl">
                 {/* Table Header (Implicit) */}
                 <div className="grid grid-cols-3 gap-8 pb-4 border-b-4 border-gray-600 mb-6">
-                  <span className="text-4xl font-bold text-gray-400 text-left">Prayer</span>
-                  <span className="text-4xl font-bold text-gray-400 text-center">Adhan</span>
-                  <span className="text-4xl font-bold text-gray-400 text-right">Iqamah</span>
+                  <span className="text-5xl font-bold text-gray-400 text-left">Prayer</span>
+                  <span className="text-5xl font-bold text-gray-400 text-center">Adhan</span>
+                  <span className="text-5xl font-bold text-gray-400 text-right">Iqamah</span>
                 </div>
                 {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
                   <div key={prayer} className="grid grid-cols-3 gap-8 py-6 border-b border-gray-700 last:border-b-0">
-                    <span className="text-5xl font-semibold text-gray-200 text-left">{prayer}</span>
-                    <span className="text-4xl text-gray-400 text-center">
+                    <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
+                    <span className="text-5xl text-gray-400 text-center">
                       {/* For Jumuah, Adhan time is not applicable from API, so display N/A or empty */}
                       {prayer === "Jumuah" ? "N/A" : formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer as keyof typeof prayerData.apiTimes.data.timings])}
                     </span>
-                    <span className="text-5xl font-bold text-primary-foreground text-right">
+                    <span className="text-6xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-4xl text-red-400">Failed to load prayer times.</p>
+              <p className="text-5xl text-red-400">Failed to load prayer times.</p>
             )}
           </div>
         )}
@@ -507,25 +498,25 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-6 overflow-y-auto">
+              <div className="flex-grow flex flex-col justify-center space-y-8 overflow-y-auto">
                 {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
-                  <Card key={event.id} className="bg-gray-700 text-white p-5 rounded-lg shadow-md">
-                    <CardHeader className="p-0 mb-1">
-                      <CardTitle className="text-3xl font-semibold text-primary-foreground">{event.title}</CardTitle>
-                      <p className="text-xl text-gray-300">
+                  <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
+                    <CardHeader className="p-0 mb-2">
+                      <CardTitle className="text-4xl font-semibold text-primary-foreground">{event.title}</CardTitle>
+                      <p className="text-2xl text-gray-300">
                         {format(parseISO(event.start), 'MMM dd, yyyy hh:mm a')}
                         {event.end && ` - ${format(parseISO(event.end), 'hh:mm a')}`}
                       </p>
                     </CardHeader>
-                    <CardContent className="p-0 text-xl text-gray-400">
-                      {event.description && <p className="mb-1 line-clamp-2">{event.description}</p>}
+                    <CardContent className="p-0 text-2xl text-gray-400">
+                      {event.description && <p className="mb-2 line-clamp-2">{event.description}</p>}
                       {event.location && <p className="font-medium">Location: {event.location}</p>}
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : (
-              <p className="text-4xl text-center text-gray-400 flex-grow flex items-center justify-center">
+              <p className="text-5xl text-center text-gray-400 flex-grow flex items-center justify-center">
                 No upcoming events to display.
               </p>
             )}
@@ -542,19 +533,18 @@ const DigitalSign = () => {
       </div>
 
       {/* Footer Section with Next Prayer Countdown */}
-      <div className="text-center mt-8 text-3xl text-gray-400">
+      <div className="text-center mt-12 text-4xl text-gray-400">
         {nextAdhanInfo && (
-          <p className="text-6xl font-bold text-accent mb-2">
+          <p className="text-7xl font-bold text-accent mb-4">
             Next Prayer: {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
           </p>
         )}
         {nextAdhanInfo && (
-          <p className="text-6xl font-extrabold text-primary-foreground">
+          <p className="text-7xl font-extrabold text-primary-foreground">
             Time Until: {nextAdhanInfo.countdown}
           </p>
         )}
-        {/* Removed the Button component here */}
-        <p className="mt-2">www.isevv.org</p>
+        <p className="mt-4 text-4xl">www.isevv.org</p>
       </div>
     </div>
   );
