@@ -423,7 +423,7 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'announcements' && views[currentViewIndex]?.show && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg px-6 py-10 shadow-lg animate-fade-in">
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-4 shadow-lg animate-fade-in"> {/* Changed px-6 py-10 to p-4 */}
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -431,15 +431,15 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-evenly"> {/* Changed to justify-evenly */}
+              <div className="flex-grow flex flex-col justify-evenly">
                 {announcements.map((announcement, index) => (
-                  <div key={announcement.id} className="text-center">
+                  <div key={announcement.id} className="text-center flex flex-col h-full"> {/* Added flex flex-col h-full */}
                     <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
                     {settings?.show_descriptions && (
                       <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full h-[600px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
+                      <div className="w-full flex-grow overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center"> {/* Changed h-[600px] to flex-grow */}
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
