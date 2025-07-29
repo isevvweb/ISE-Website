@@ -383,12 +383,12 @@ const DigitalSign = () => {
       {/* Footer Section with Next Prayer Countdown */}
       <div className="text-center mt-8 text-3xl text-gray-400">
         {nextPrayer && (
-          <p className="text-4xl font-bold text-accent mb-2">
+          <p className="text-6xl font-bold text-accent mb-2"> {/* Changed to text-6xl */}
             Next Prayer: {nextPrayer.name} at {nextPrayer.formattedTime}
           </p>
         )}
         {nextPrayer && (
-          <p className="text-6xl font-extrabold text-primary-foreground"> {/* Increased font size here */}
+          <p className="text-6xl font-extrabold text-primary-foreground">
             Time Until: {nextPrayer.countdown}
           </p>
         )}
