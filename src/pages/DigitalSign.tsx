@@ -498,7 +498,7 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-8 overflow-y-auto">
+              <div className="flex-grow flex flex-col justify-center space-y-6 overflow-y-auto">
                 {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
                   <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
                     <CardHeader className="p-0 mb-2">
@@ -536,12 +536,12 @@ const DigitalSign = () => {
       <div className="text-center mt-12 text-4xl text-gray-400">
         {nextAdhanInfo && (
           <p className="text-7xl font-bold text-accent mb-4">
-            Next Prayer: {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
+            {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
           </p>
         )}
         {nextAdhanInfo && (
           <p className="text-7xl font-extrabold text-primary-foreground">
-            Time Until: {nextAdhanInfo.countdown}
+            {nextAdhanInfo.countdown}
           </p>
         )}
         <p className="mt-4 text-4xl">www.isevv.org</p>
