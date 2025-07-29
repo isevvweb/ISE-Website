@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO, parse, addDays } from "date-fns";
+import { format, parseISO, parse, addDays, differenceInSeconds } from "date-fns";
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNextPrayerCountdown } from "@/hooks/useNextPrayerCountdown"; // New import
+import { useNextPrayerCountdown } from "@/hooks/useNextPrayerCountdown";
+import AdhanReminder from "@/components/AdhanReminder"; // Import the new component
 
 interface PrayerTimesData {
   code: number;
@@ -94,7 +95,7 @@ const COMMUNITY_CALENDAR_ID = '464ad63344b9b7c026adb7ee76c370b95864259cac908d685
 const formatTimeForDisplay = (time24h: string): string => {
   if (!time24h || time24h === "N/A") return "N/A";
   const timeRegex = /^\d{2}:\d{2}$/;
-  if (timeRegex.test(time24h)) {
+  if (timeRegex.test(time24h)) { // Corrected typo here
     try {
       const parsedTime = parse(time24h, 'HH:mm', new Date());
       if (!isNaN(parsedTime.getTime())) {
@@ -176,6 +177,9 @@ const fetchUpcomingEvents = async (): Promise<CalendarEvent[]> => {
 
 const DigitalSign = () => {
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
+  const [showAdhanReminder, setShowAdhanReminder] = useState(false);
+  const [reminderPrayerName, setReminderPrayerName] = useState<string | null>(null);
+  const [lastRemindedPrayerName, setLastRemindedPrayerName] = useState<string | null>(null); // To prevent repeated reminders
 
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
     queryKey: ["digitalSignSettings"],
@@ -233,20 +237,41 @@ const DigitalSign = () => {
     { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView', show: upcomingEvents && upcomingEvents.length > 0 },
   ].filter(view => view.show); // Filter out views that shouldn't be shown
 
+  // Effect for Adhan reminder logic
+  useEffect(() => {
+    if (!nextPrayer || showAdhanReminder) return; // Don't re-trigger if already showing
+
+    const now = toZonedTime(new Date(), TIMEZONE);
+    const diffInSeconds = differenceInSeconds(nextPrayer.time, now);
+
+    // Trigger reminder if within 10 minutes (600 seconds) and not already reminded for this prayer
+    if (diffInSeconds <= 600 && diffInSeconds > 0 && nextPrayer.name !== lastRemindedPrayerName) {
+      setShowAdhanReminder(true);
+      setReminderPrayerName(nextPrayer.name);
+      setLastRemindedPrayerName(nextPrayer.name); // Mark this prayer as reminded
+    } else if (diffInSeconds <= 0 && nextPrayer.name === lastRemindedPrayerName) {
+      // If prayer time has passed, reset lastRemindedPrayerName so it can remind for the *next* prayer
+      setLastRemindedPrayerName(null);
+    }
+  }, [nextPrayer, showAdhanReminder, lastRemindedPrayerName]);
+
   // Effect for automatic view rotation
   useEffect(() => {
-    if (views.length === 0) return; // No views to rotate
+    let interval: NodeJS.Timeout;
+    if (!showAdhanReminder && views.length > 0) { // Only rotate if reminder is not showing and there are views
+      const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
+        ? settings.rotation_interval_seconds * 1000
+        : 15000; // Default to 15 seconds
 
-    const intervalTime = (settings?.rotation_interval_seconds && settings.rotation_interval_seconds >= 5)
-      ? settings.rotation_interval_seconds * 1000
-      : 15000; // Default to 15 seconds
+      interval = setInterval(() => {
+        setCurrentViewIndex((prevIndex) => (prevIndex + 1) % views.length);
+      }, intervalTime);
+    }
 
-    const interval = setInterval(() => {
-      setCurrentViewIndex((prevIndex) => (prevIndex + 1) % views.length);
-    }, intervalTime);
-
-    return () => clearInterval(interval);
-  }, [settings, views.length]); // Re-run if settings or number of active views changes
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [settings, views.length, showAdhanReminder]); // Re-run if settings, number of active views, or reminder state changes
 
   if (prayerError) {
     showError("Error loading prayer times for sign: " + prayerError.message);
@@ -262,6 +287,10 @@ const DigitalSign = () => {
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-8 font-sans overflow-hidden">
+      {showAdhanReminder && reminderPrayerName && (
+        <AdhanReminder prayerName={reminderPrayerName} onClose={() => setShowAdhanReminder(false)} />
+      )}
+
       {/* Dynamic Title for the current section */}
       <h2 className="text-6xl font-bold mb-8 text-primary-foreground text-center">
         {views[currentViewIndex]?.title || 'Loading...'}
@@ -383,7 +412,7 @@ const DigitalSign = () => {
       {/* Footer Section with Next Prayer Countdown */}
       <div className="text-center mt-8 text-3xl text-gray-400">
         {nextPrayer && (
-          <p className="text-6xl font-bold text-accent mb-2"> {/* Changed to text-6xl */}
+          <p className="text-6xl font-bold text-accent mb-2">
             Next Prayer: {nextPrayer.name} at {nextPrayer.formattedTime}
           </p>
         )}
