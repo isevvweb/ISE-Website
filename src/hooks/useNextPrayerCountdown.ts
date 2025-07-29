@@ -79,12 +79,11 @@ export const useNextPrayerCountdown = (
         let effectiveTimeStr: string | undefined;
 
         if (prayerName === "Jumuah") {
+          // Jumuah always uses Iqamah time
           effectiveTimeStr = iqamahTimes["Jumuah"];
         } else {
-          // Prioritize Iqamah time if available and not "N/A", otherwise use Adhan time
-          effectiveTimeStr = iqamahTimes[prayerName] && iqamahTimes[prayerName] !== "N/A"
-            ? iqamahTimes[prayerName]
-            : apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
+          // For other prayers, always use Adhan time from API
+          effectiveTimeStr = apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
         }
 
         if (effectiveTimeStr && effectiveTimeStr !== "N/A") {
@@ -111,7 +110,7 @@ export const useNextPrayerCountdown = (
         const minutes = Math.floor((diffSeconds % 3600) / 60);
         const seconds = diffSeconds % 60;
 
-        const countdownString = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+        const countdownString = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}s`; // Removed seconds for brevity
 
         foundNextPrayer = {
           ...prayer,
