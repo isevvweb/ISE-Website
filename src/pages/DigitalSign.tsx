@@ -5,7 +5,8 @@ import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Import Card components
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNextPrayerCountdown } from "@/hooks/useNextPrayerCountdown"; // New import
 
 interface PrayerTimesData {
   code: number;
@@ -209,6 +210,9 @@ const DigitalSign = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Use the new hook for next prayer countdown
+  const nextPrayer = useNextPrayerCountdown(prayerData?.apiTimes.data, prayerData?.iqamahTimes);
+
   // Log events data and errors for debugging
   useEffect(() => {
     if (upcomingEvents) {
@@ -253,24 +257,20 @@ const DigitalSign = () => {
   if (settingsError) {
     showError("Error loading digital sign settings: " + settingsError.message);
   }
-  // Removed showError for eventsError here, as it's logged in useEffect now.
-  // if (eventsError) {
-  //   showError("Error loading upcoming events for sign: " + eventsError.message);
-  // }
 
   const currentView = views[currentViewIndex]?.id;
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-20 font-sans overflow-hidden">
+    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-8 font-sans overflow-hidden">
       {/* Dynamic Title for the current section */}
-      <h2 className="text-7xl font-bold mb-12 text-primary-foreground text-center">
+      <h2 className="text-6xl font-bold mb-8 text-primary-foreground text-center">
         {views[currentViewIndex]?.title || 'Loading...'}
       </h2>
 
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col items-center justify-center relative">
         {currentView === 'prayerTimes' && (
-          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+          <div key="prayer-times-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             {isLoadingPrayer ? (
               <div className="space-y-10 w-full max-w-3xl">
                 {[...Array(6)].map((_, i) => ( // Increased skeleton count for Jumuah
@@ -284,20 +284,20 @@ const DigitalSign = () => {
             ) : prayerData ? (
               <div className="w-full max-w-3xl">
                 {/* Table Header (Implicit) */}
-                <div className="grid grid-cols-3 gap-10 pb-6 border-b-4 border-gray-600 mb-8">
-                  <span className="text-5xl font-bold text-gray-400 text-left">Prayer</span>
-                  <span className="text-5xl font-bold text-gray-400 text-center">Adhan</span>
-                  <span className="text-5xl font-bold text-gray-400 text-right">Iqamah</span>
+                <div className="grid grid-cols-3 gap-8 pb-4 border-b-4 border-gray-600 mb-6">
+                  <span className="text-4xl font-bold text-gray-400 text-left">Prayer</span>
+                  <span className="text-4xl font-bold text-gray-400 text-center">Adhan</span>
+                  <span className="text-4xl font-bold text-gray-400 text-right">Iqamah</span>
                 </div>
                 {/* Prayer Rows */}
                 {prayerOrder.map((prayer) => (
-                  <div key={prayer} className="grid grid-cols-3 gap-10 py-8 border-b border-gray-700 last:border-b-0">
-                    <span className="text-6xl font-semibold text-gray-200 text-left">{prayer}</span>
-                    <span className="text-5xl text-gray-400 text-center">
+                  <div key={prayer} className="grid grid-cols-3 gap-8 py-6 border-b border-gray-700 last:border-b-0">
+                    <span className="text-5xl font-semibold text-gray-200 text-left">{prayer}</span>
+                    <span className="text-4xl text-gray-400 text-center">
                       {/* For Jumuah, Adhan time is not applicable from API, so display N/A or empty */}
                       {prayer === "Jumuah" ? "N/A" : formatTimeForDisplay(prayerData.apiTimes.data.timings[prayer as keyof typeof prayerData.apiTimes.data.timings])}
                     </span>
-                    <span className="text-6xl font-bold text-primary-foreground text-right">
+                    <span className="text-5xl font-bold text-primary-foreground text-right">
                       {formatTimeForDisplay(prayerData.iqamahTimes[prayer] || "N/A")}
                     </span>
                   </div>
@@ -310,7 +310,7 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'announcements' && views[currentViewIndex]?.show && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -318,19 +318,19 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : announcements && announcements.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-12">
+              <div className="flex-grow flex flex-col justify-center space-y-8">
                 {announcements.map((announcement, index) => (
                   <div key={announcement.id} className="text-center">
-                    <h3 className="text-6xl font-semibold text-gray-100 mb-6">{announcement.title}</h3>
+                    <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
                     {settings?.show_descriptions && (
-                      <p className="text-4xl text-gray-300 mb-8">{announcement.description}</p>
+                      <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full h-[400px] overflow-hidden rounded-md mx-auto mb-6 flex items-center justify-center">
+                      <div className="w-full h-[300px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
-                    <p className="text-3xl text-gray-400">
+                    <p className="text-2xl text-gray-400">
                       {format(parseISO(announcement.announcement_date), "PPP")}
                     </p>
                   </div>
@@ -345,7 +345,7 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'upcomingEvents' && views[currentViewIndex]?.show && (
-          <div key="upcoming-events-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-20 shadow-lg animate-fade-in">
+          <div key="upcoming-events-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
             {isLoadingEvents ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -354,18 +354,18 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-8 overflow-y-auto">
+              <div className="flex-grow flex flex-col justify-center space-y-6 overflow-y-auto">
                 {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
-                  <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
-                    <CardHeader className="p-0 mb-2">
-                      <CardTitle className="text-4xl font-semibold text-primary-foreground">{event.title}</CardTitle>
-                      <p className="text-2xl text-gray-300">
+                  <Card key={event.id} className="bg-gray-700 text-white p-5 rounded-lg shadow-md">
+                    <CardHeader className="p-0 mb-1">
+                      <CardTitle className="text-3xl font-semibold text-primary-foreground">{event.title}</CardTitle>
+                      <p className="text-xl text-gray-300">
                         {format(parseISO(event.start), 'MMM dd, yyyy hh:mm a')}
                         {event.end && ` - ${format(parseISO(event.end), 'hh:mm a')}`}
                       </p>
                     </CardHeader>
-                    <CardContent className="p-0 text-2xl text-gray-400">
-                      {event.description && <p className="mb-2 line-clamp-2">{event.description}</p>}
+                    <CardContent className="p-0 text-xl text-gray-400">
+                      {event.description && <p className="mb-1 line-clamp-2">{event.description}</p>}
                       {event.location && <p className="font-medium">Location: {event.location}</p>}
                     </CardContent>
                   </Card>
@@ -380,8 +380,18 @@ const DigitalSign = () => {
         )}
       </div>
 
-      {/* Footer Section */}
-      <div className="text-center mt-12 text-4xl text-gray-400">
+      {/* Footer Section with Next Prayer Countdown */}
+      <div className="text-center mt-8 text-3xl text-gray-400">
+        {nextPrayer && (
+          <p className="text-4xl font-bold text-accent mb-2">
+            Next Prayer: {nextPrayer.name} at {nextPrayer.formattedTime}
+          </p>
+        )}
+        {nextPrayer && (
+          <p className="text-5xl font-extrabold text-primary-foreground">
+            Time Until: {nextPrayer.countdown}
+          </p>
+        )}
         <p className="mt-2">www.isevv.org</p>
       </div>
     </div>
