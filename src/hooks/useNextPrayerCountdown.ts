@@ -31,7 +31,8 @@ interface NextPrayerInfo {
   countdown: string; // e.g., "01h 30m 15s"
 }
 
-const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
+// Exclude Jumuah from this list as it should not be part of the daily countdown
+const dailyPrayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
 // Helper to get a Date object for a given time string (HH:mm) for a specific date
 const getDateForTime = (timeStr: string, date: Date): Date | null => {
@@ -71,21 +72,16 @@ export const useNextPrayerCountdown = (
 
     const potentialNextPrayers: { name: string; time: Date; formattedTime: string }[] = [];
 
-    // Iterate through today's and tomorrow's prayers to find the next one
+    // Iterate through today's and tomorrow's daily prayers to find the next one
     for (let i = 0; i < 2; i++) { // 0 for today, 1 for tomorrow
       const currentDay = i === 0 ? today : tomorrow;
 
-      for (const prayerName of prayerOrder) {
+      for (const prayerName of dailyPrayerOrder) { // Use dailyPrayerOrder
         let effectiveTimeStr: string | undefined;
 
-        if (prayerName === "Jumuah") {
-          // Jumuah always uses Iqamah time
-          effectiveTimeStr = iqamahTimes["Jumuah"];
-        } else {
-          // For other prayers, always use Adhan time from API
-          effectiveTimeStr = apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
-        }
-
+        // Always use Adhan time from API for daily prayers
+        effectiveTimeStr = apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
+        
         if (effectiveTimeStr && effectiveTimeStr !== "N/A") {
           const prayerDate = getDateForTime(effectiveTimeStr, currentDay);
           if (prayerDate) {

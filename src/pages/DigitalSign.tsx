@@ -388,7 +388,7 @@ const DigitalSign = () => {
           </p>
         )}
         {nextPrayer && (
-          <p className="text-5xl font-extrabold text-primary-foreground">
+          <p className="text-6xl font-extrabold text-primary-foreground"> {/* Increased font size here */}
             Time Until: {nextPrayer.countdown}
           </p>
         )}
