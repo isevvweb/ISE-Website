@@ -423,7 +423,7 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'announcements' && views[currentViewIndex]?.show && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg px-6 py-10 shadow-lg animate-fade-in">
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -439,7 +439,7 @@ const DigitalSign = () => {
                       <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full h-[500px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
+                      <div className="w-full h-[600px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
