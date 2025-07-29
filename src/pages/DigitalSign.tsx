@@ -26,7 +26,8 @@ interface PrayerTimesData {
       Imsak: string;
       Midnight: string;
       Firstthird: string;
-      Lastthird: string;
+      Lastthird:
+string;
     };
     date: {
       readable: string;
@@ -420,13 +421,14 @@ const DigitalSign = () => {
 
   const currentView = views[currentViewIndex];
 
-  const handlePlayAdhan = () => {
-    if (adhanAudioRef.current) {
-      adhanAudioRef.current.pause(); // Stop any current playback
-      adhanAudioRef.current.currentTime = 0; // Rewind to start
-      adhanAudioRef.current.play().catch(e => console.error("Error playing Adhan audio manually:", e));
-    }
-  };
+  // Removed handlePlayAdhan as the button is being removed
+  // const handlePlayAdhan = () => {
+  //   if (adhanAudioRef.current) {
+  //     adhanAudioRef.current.pause(); // Stop any current playback
+  //     adhanAudioRef.current.currentTime = 0; // Rewind to start
+  //     adhanAudioRef.current.play().catch(e => console.error("Error playing Adhan audio manually:", e));
+  //   }
+  // };
 
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-6 font-sans overflow-hidden">
@@ -539,7 +541,7 @@ const DigitalSign = () => {
         )}
       </div>
 
-      {/* Footer Section with Next Prayer Countdown and Play Adhan Button */}
+      {/* Footer Section with Next Prayer Countdown */}
       <div className="text-center mt-8 text-3xl text-gray-400">
         {nextAdhanInfo && (
           <p className="text-6xl font-bold text-accent mb-2">
@@ -551,12 +553,8 @@ const DigitalSign = () => {
             Time Until: {nextAdhanInfo.countdown}
           </p>
         )}
-        <div className="flex justify-center items-center gap-4 mt-4">
-          <Button onClick={handlePlayAdhan} className="text-3xl px-8 py-4">
-            Play Adhan
-          </Button>
-          <p className="mt-2">www.isevv.org</p>
-        </div>
+        {/* Removed the Button component here */}
+        <p className="mt-2">www.isevv.org</p>
       </div>
     </div>
   );
