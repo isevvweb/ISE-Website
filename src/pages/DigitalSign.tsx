@@ -439,7 +439,7 @@ const DigitalSign = () => {
                       <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full h-[300px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
+                      <div className="w-full h-[500px] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center">
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
