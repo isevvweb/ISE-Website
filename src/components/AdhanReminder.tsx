@@ -11,7 +11,7 @@ const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, timeRemaining
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 8000); // Automatically close after 8 seconds
+    }, 30000); // Automatically close after 30 seconds
 
     return () => clearTimeout(timer);
   }, [onClose]);
