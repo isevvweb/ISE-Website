@@ -370,7 +370,7 @@ const DigitalSign = () => {
   const currentView = views[currentViewIndex]?.id;
 
   return (
-    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-8 font-sans overflow-hidden">
+    <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-6 font-sans overflow-hidden"> {/* Reduced overall padding to p-6 */}
       {showAdhanReminder && reminderPrayerName && (
         <AdhanReminder prayerName={reminderPrayerName} timeRemainingText={reminderText} onClose={() => setShowAdhanReminder(false)} />
       )}
@@ -423,7 +423,7 @@ const DigitalSign = () => {
         )}
 
         {currentView === 'announcements' && views[currentViewIndex]?.show && (
-          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-4 shadow-lg animate-fade-in"> {/* Changed px-6 py-10 to p-4 */}
+          <div key="announcements-view" className="absolute inset-0 flex flex-col bg-gray-800 rounded-lg p-8 shadow-lg animate-fade-in"> {/* Increased padding to p-8 */}
             {isLoadingAnnouncements || isLoadingSettings ? (
               <div className="space-y-10 flex-grow flex flex-col justify-center">
                 <Skeleton className="h-16 w-3/4 mx-auto bg-gray-700" />
@@ -433,13 +433,13 @@ const DigitalSign = () => {
             ) : announcements && announcements.length > 0 ? (
               <div className="flex-grow flex flex-col justify-evenly">
                 {announcements.map((announcement, index) => (
-                  <div key={announcement.id} className="text-center flex flex-col h-full"> {/* Added flex flex-col h-full */}
+                  <div key={announcement.id} className="text-center flex flex-col h-full">
                     <h3 className="text-5xl font-semibold text-gray-100 mb-4">{announcement.title}</h3>
                     {settings?.show_descriptions && (
                       <p className="text-3xl text-gray-300 mb-6">{announcement.description}</p>
                     )}
                     {settings?.show_images && announcement.image_url && (
-                      <div className="w-full flex-grow overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center"> {/* Changed h-[600px] to flex-grow */}
+                      <div className="w-full max-h-[60vh] overflow-hidden rounded-md mx-auto mb-4 flex items-center justify-center"> {/* Changed to max-h-[60vh] */}
                         <img src={announcement.image_url} alt={announcement.title} className="max-w-full max-h-full object-contain" />
                       </div>
                     )}
