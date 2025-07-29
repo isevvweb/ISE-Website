@@ -3,10 +3,11 @@ import { BellRing } from "lucide-react";
 
 interface AdhanReminderProps {
   prayerName: string;
+  timeRemainingText: string; // New prop for custom text
   onClose: () => void;
 }
 
-const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, onClose }) => {
+const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, timeRemainingText, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
@@ -23,7 +24,7 @@ const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, onClose }) =>
           Adhan for {prayerName}
         </h1>
         <p className="text-5xl md:text-6xl font-semibold">
-          in 10 Minutes!
+          {timeRemainingText}
         </p>
       </div>
     </div>

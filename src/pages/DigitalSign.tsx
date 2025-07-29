@@ -95,7 +95,7 @@ const COMMUNITY_CALENDAR_ID = '464ad63344b9b7c026adb7ee76c370b95864259cac908d685
 const formatTimeForDisplay = (time24h: string): string => {
   if (!time24h || time24h === "N/A") return "N/A";
   const timeRegex = /^\d{2}:\d{2}$/;
-  if (timeRegex.test(time24h)) { // Corrected typo here
+  if (timeRegex.test(time24h)) {
     try {
       const parsedTime = parse(time24h, 'HH:mm', new Date());
       if (!isNaN(parsedTime.getTime())) {
@@ -179,7 +179,9 @@ const DigitalSign = () => {
   const [currentViewIndex, setCurrentViewIndex] = useState(0);
   const [showAdhanReminder, setShowAdhanReminder] = useState(false);
   const [reminderPrayerName, setReminderPrayerName] = useState<string | null>(null);
-  const [lastRemindedPrayerName, setLastRemindedPrayerName] = useState<string | null>(null); // To prevent repeated reminders
+  const [reminderText, setReminderText] = useState<string>(""); // New state for reminder text
+  const [lastReminded10MinPrayerName, setLastReminded10MinPrayerName] = useState<string | null>(null); // To prevent repeated 10-min reminders
+  const [lastReminded1HourPrayerName, setLastReminded1HourPrayerName] = useState<string | null>(null); // To prevent repeated 1-hour reminders
 
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useQuery<DigitalSignSettings, Error>({
     queryKey: ["digitalSignSettings"],
@@ -215,7 +217,7 @@ const DigitalSign = () => {
   });
 
   // Use the new hook for next prayer countdown
-  const nextPrayer = useNextPrayerCountdown(prayerData?.apiTimes.data, prayerData?.iqamahTimes);
+  const { nextAdhanInfo, oneHourBeforeAdhanInfo } = useNextPrayerCountdown(prayerData?.apiTimes.data);
 
   // Log events data and errors for debugging
   useEffect(() => {
@@ -237,23 +239,41 @@ const DigitalSign = () => {
     { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView', show: upcomingEvents && upcomingEvents.length > 0 },
   ].filter(view => view.show); // Filter out views that shouldn't be shown
 
-  // Effect for Adhan reminder logic
+  // Effect for Adhan reminder logic (1 hour and 10 minutes)
   useEffect(() => {
-    if (!nextPrayer || showAdhanReminder) return; // Don't re-trigger if already showing
+    if (showAdhanReminder) return; // Don't re-trigger if already showing a reminder
 
     const now = toZonedTime(new Date(), TIMEZONE);
-    const diffInSeconds = differenceInSeconds(nextPrayer.time, now);
 
-    // Trigger reminder if within 10 minutes (600 seconds) and not already reminded for this prayer
-    if (diffInSeconds <= 600 && diffInSeconds > 0 && nextPrayer.name !== lastRemindedPrayerName) {
-      setShowAdhanReminder(true);
-      setReminderPrayerName(nextPrayer.name);
-      setLastRemindedPrayerName(nextPrayer.name); // Mark this prayer as reminded
-    } else if (diffInSeconds <= 0 && nextPrayer.name === lastRemindedPrayerName) {
-      // If prayer time has passed, reset lastRemindedPrayerName so it can remind for the *next* prayer
-      setLastRemindedPrayerName(null);
+    // Check for 1-hour reminder
+    if (oneHourBeforeAdhanInfo) {
+      const diffInSeconds = differenceInSeconds(oneHourBeforeAdhanInfo.time, now);
+      if (diffInSeconds <= 0 && diffInSeconds > -60 && oneHourBeforeAdhanInfo.name !== lastReminded1HourPrayerName) { // Trigger within 0-60 seconds after the 1-hour mark
+        setShowAdhanReminder(true);
+        setReminderPrayerName(oneHourBeforeAdhanInfo.name);
+        setReminderText("in 1 Hour!");
+        setLastReminded1HourPrayerName(oneHourBeforeAdhanInfo.name);
+        return; // Trigger this and exit
+      } else if (diffInSeconds < -60 && oneHourBeforeAdhanInfo.name === lastReminded1HourPrayerName) {
+        // If 1-hour mark has passed by more than 60 seconds, reset reminder for this prayer
+        setLastReminded1HourPrayerName(null);
+      }
     }
-  }, [nextPrayer, showAdhanReminder, lastRemindedPrayerName]);
+
+    // Check for 10-minute reminder (only if 1-hour reminder is not active or already passed)
+    if (nextAdhanInfo) {
+      const diffInSeconds = differenceInSeconds(nextAdhanInfo.time, now);
+      if (diffInSeconds <= 600 && diffInSeconds > 0 && nextAdhanInfo.name !== lastReminded10MinPrayerName) {
+        setShowAdhanReminder(true);
+        setReminderPrayerName(nextAdhanInfo.name);
+        setReminderText("in 10 Minutes!");
+        setLastReminded10MinPrayerName(nextAdhanInfo.name);
+      } else if (diffInSeconds <= 0 && nextAdhanInfo.name === lastReminded10MinPrayerName) {
+        // If prayer time has passed, reset lastReminded10MinPrayerName
+        setLastReminded10MinPrayerName(null);
+      }
+    }
+  }, [nextAdhanInfo, oneHourBeforeAdhanInfo, showAdhanReminder, lastReminded10MinPrayerName, lastReminded1HourPrayerName]);
 
   // Effect for automatic view rotation
   useEffect(() => {
@@ -288,7 +308,7 @@ const DigitalSign = () => {
   return (
     <div className="min-h-screen w-screen flex flex-col bg-gray-900 text-white p-8 font-sans overflow-hidden">
       {showAdhanReminder && reminderPrayerName && (
-        <AdhanReminder prayerName={reminderPrayerName} onClose={() => setShowAdhanReminder(false)} />
+        <AdhanReminder prayerName={reminderPrayerName} timeRemainingText={reminderText} onClose={() => setShowAdhanReminder(false)} />
       )}
 
       {/* Dynamic Title for the current section */}
@@ -411,14 +431,14 @@ const DigitalSign = () => {
 
       {/* Footer Section with Next Prayer Countdown */}
       <div className="text-center mt-8 text-3xl text-gray-400">
-        {nextPrayer && (
+        {nextAdhanInfo && (
           <p className="text-6xl font-bold text-accent mb-2">
-            Next Prayer: {nextPrayer.name} at {nextPrayer.formattedTime}
+            Next Prayer: {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
           </p>
         )}
-        {nextPrayer && (
+        {nextAdhanInfo && (
           <p className="text-6xl font-extrabold text-primary-foreground">
-            Time Until: {nextPrayer.countdown}
+            Time Until: {nextAdhanInfo.countdown}
           </p>
         )}
         <p className="mt-2">www.isevv.org</p>

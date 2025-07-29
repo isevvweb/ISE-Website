@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, parse, isAfter, addDays, differenceInSeconds } from "date-fns";
+import { format, parse, isAfter, addDays, differenceInSeconds, subMinutes } from "date-fns";
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 const TIMEZONE = 'America/Chicago'; // Define the timezone for Evansville
@@ -19,16 +19,11 @@ interface PrayerTimesApiData {
   };
 }
 
-interface IqamahTimeData {
-  prayer_name: string;
-  iqamah_time: string;
-}
-
-interface NextPrayerInfo {
+interface PrayerInfo {
   name: string;
-  time: Date; // The actual Date object for the next prayer
-  formattedTime: string; // e.g., "05:30 PM"
-  countdown: string; // e.g., "01h 30m 15s"
+  time: Date;
+  formattedTime: string;
+  countdown: string;
 }
 
 // Exclude Jumuah from this list as it should not be part of the daily countdown
@@ -56,13 +51,14 @@ const getDateForTime = (timeStr: string, date: Date): Date | null => {
 
 export const useNextPrayerCountdown = (
   apiTimes: PrayerTimesApiData | undefined,
-  iqamahTimes: Record<string, string> | undefined
 ) => {
-  const [nextPrayer, setNextPrayer] = useState<NextPrayerInfo | null>(null);
+  const [nextAdhanInfo, setNextAdhanInfo] = useState<PrayerInfo | null>(null);
+  const [oneHourBeforeAdhanInfo, setOneHourBeforeAdhanInfo] = useState<PrayerInfo | null>(null);
 
   const calculateCountdown = useCallback(() => {
-    if (!apiTimes || !iqamahTimes) {
-      setNextPrayer(null);
+    if (!apiTimes) {
+      setNextAdhanInfo(null);
+      setOneHourBeforeAdhanInfo(null);
       return;
     }
 
@@ -70,25 +66,22 @@ export const useNextPrayerCountdown = (
     const today = now;
     const tomorrow = addDays(today, 1);
 
-    const potentialNextPrayers: { name: string; time: Date; formattedTime: string }[] = [];
+    const potentialAdhanTimes: { name: string; time: Date; formattedTime: string }[] = [];
 
     // Iterate through today's and tomorrow's daily prayers to find the next one
     for (let i = 0; i < 2; i++) { // 0 for today, 1 for tomorrow
       const currentDay = i === 0 ? today : tomorrow;
 
-      for (const prayerName of dailyPrayerOrder) { // Use dailyPrayerOrder
-        let effectiveTimeStr: string | undefined;
-
-        // Always use Adhan time from API for daily prayers
-        effectiveTimeStr = apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
+      for (const prayerName of dailyPrayerOrder) {
+        const adhanTimeStr = apiTimes.timings[prayerName as keyof typeof apiTimes.timings];
         
-        if (effectiveTimeStr && effectiveTimeStr !== "N/A") {
-          const prayerDate = getDateForTime(effectiveTimeStr, currentDay);
-          if (prayerDate) {
-            potentialNextPrayers.push({
+        if (adhanTimeStr && adhanTimeStr !== "N/A") {
+          const adhanDate = getDateForTime(adhanTimeStr, currentDay);
+          if (adhanDate) {
+            potentialAdhanTimes.push({
               name: prayerName,
-              time: prayerDate,
-              formattedTime: formatInTimeZone(prayerDate, TIMEZONE, 'hh:mm a'),
+              time: adhanDate,
+              formattedTime: formatInTimeZone(adhanDate, TIMEZONE, 'hh:mm a'),
             });
           }
         }
@@ -96,28 +89,50 @@ export const useNextPrayerCountdown = (
     }
 
     // Sort all potential prayers by their actual Date object to find the earliest future one
-    potentialNextPrayers.sort((a, b) => a.time.getTime() - b.time.getTime());
+    potentialAdhanTimes.sort((a, b) => a.time.getTime() - b.time.getTime());
 
-    let foundNextPrayer: NextPrayerInfo | null = null;
-    for (const prayer of potentialNextPrayers) {
+    let foundNextAdhan: PrayerInfo | null = null;
+    let foundOneHourBeforeAdhan: PrayerInfo | null = null;
+
+    for (const prayer of potentialAdhanTimes) {
       if (isAfter(prayer.time, now)) {
+        // This is the next Adhan time
         const diffSeconds = differenceInSeconds(prayer.time, now);
         const hours = Math.floor(diffSeconds / 3600);
         const minutes = Math.floor((diffSeconds % 3600) / 60);
         const seconds = diffSeconds % 60;
-
         const countdownString = `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
 
-        foundNextPrayer = {
+        foundNextAdhan = {
           ...prayer,
           countdown: countdownString,
         };
-        break;
+
+        // Calculate one hour before this Adhan time
+        const oneHourBeforeTime = subMinutes(prayer.time, 60);
+        // Only set if it's still in the future relative to 'now'
+        if (isAfter(oneHourBeforeTime, now)) {
+          const diffSecondsOneHour = differenceInSeconds(oneHourBeforeTime, now);
+          const hoursOneHour = Math.floor(diffSecondsOneHour / 3600);
+          const minutesOneHour = Math.floor((diffSecondsOneHour % 3600) / 60);
+          const secondsOneHour = diffSecondsOneHour % 60;
+          const countdownStringOneHour = `${hoursOneHour.toString().padStart(2, '0')}h ${minutesOneHour.toString().padStart(2, '0')}m ${secondsOneHour.toString().padStart(2, '0')}s`;
+
+          foundOneHourBeforeAdhan = {
+            name: prayer.name, // Still refers to the same prayer
+            time: oneHourBeforeTime,
+            formattedTime: formatInTimeZone(oneHourBeforeTime, TIMEZONE, 'hh:mm a'),
+            countdown: countdownStringOneHour,
+          };
+        }
+        break; // Found the next Adhan, so we can stop
       }
     }
 
-    setNextPrayer(foundNextPrayer);
-  }, [apiTimes, iqamahTimes]);
+    setNextAdhanInfo(foundNextAdhan);
+    setOneHourBeforeAdhanInfo(foundOneHourBeforeAdhan);
+
+  }, [apiTimes]);
 
   useEffect(() => {
     calculateCountdown(); // Initial calculation
@@ -129,5 +144,5 @@ export const useNextPrayerCountdown = (
     return () => clearInterval(intervalId); // Cleanup on unmount
   }, [calculateCountdown]);
 
-  return nextPrayer;
+  return { nextAdhanInfo, oneHourBeforeAdhanInfo };
 };
