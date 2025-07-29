@@ -428,7 +428,7 @@ const DigitalSign = () => {
       )}
 
       {/* Dynamic Title for the current section */}
-      <h2 className="text-7xl font-bold mb-10 text-primary-foreground text-center">
+      <h2 className="text-8xl font-bold mb-10 text-primary-foreground text-center">
         {currentView?.title || 'Loading...'}
       </h2>
 
@@ -498,7 +498,7 @@ const DigitalSign = () => {
                 <Skeleton className="h-12 w-1/2 mx-auto bg-gray-700" />
               </div>
             ) : upcomingEvents && upcomingEvents.length > 0 ? (
-              <div className="flex-grow flex flex-col justify-center space-y-6 overflow-y-auto">
+              <div className="flex-grow flex flex-col justify-center space-y-8 overflow-y-auto">
                 {upcomingEvents.slice(0, 5).map((event) => ( // Display top 5 events
                   <Card key={event.id} className="bg-gray-700 text-white p-6 rounded-lg shadow-md">
                     <CardHeader className="p-0 mb-2">
