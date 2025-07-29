@@ -7,7 +7,8 @@ import { showError } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNextPrayerCountdown } from "@/hooks/useNextPrayerCountdown";
-import AdhanReminder from "@/components/AdhanReminder"; // Import the new component
+import AdhanReminder from "@/components/AdhanReminder";
+import WhatsAppQRSection from "@/components/WhatsAppQRSection"; // Import the new component
 
 interface PrayerTimesData {
   code: number;
@@ -240,6 +241,7 @@ const DigitalSign = () => {
     { id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView', show: true },
     { id: 'announcements', title: 'Announcements', component: 'AnnouncementsView', show: settings && settings.max_announcements > 0 && announcements && announcements.length > 0 },
     { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView', show: upcomingEvents && upcomingEvents.length > 0 },
+    { id: 'whatsappQRs', title: 'Join Our WhatsApp Groups', component: 'WhatsAppQRView', show: true }, // New view
   ].filter(view => view.show); // Filter out views that shouldn't be shown
 
   // Effect to initialize audio and handle 'ended' event
@@ -487,6 +489,15 @@ const DigitalSign = () => {
                 No upcoming events to display.
               </p>
             )}
+          </div>
+        )}
+
+        {currentView === 'whatsappQRs' && views[currentViewIndex]?.show && (
+          <div key="whatsapp-qr-view" className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 rounded-lg p-10 shadow-lg animate-fade-in">
+            <WhatsAppQRSection
+              communityQrUrl="/whatsapp-community-qr.png"
+              youthQrUrl="/whatsapp-youth-qr.png"
+            />
           </div>
         )}
       </div>
