@@ -417,10 +417,17 @@ const DigitalSign = () => {
         <AdhanReminder prayerName={reminderPrayerName} timeRemainingText={reminderText} onClose={() => setShowAdhanReminder(false)} />
       )}
 
-      {/* Dynamic Title for the current section */}
-      <h2 className="text-8xl font-bold mb-10 text-primary-foreground text-center">
-        {currentView?.title || 'Loading...'}
-      </h2>
+      {/* Header Section with Title and Date */}
+      <div className="text-center mb-10">
+        <h2 className="text-8xl font-bold mb-4 text-primary-foreground">
+          {currentView?.title || 'Loading...'}
+        </h2>
+        {prayerData && (
+          <p className="text-4xl text-gray-400">
+            {prayerData.apiTimes.data.date.readable} ({prayerData.apiTimes.data.date.hijri.date} Hijri)
+          </p>
+        )}
+      </div>
 
       {/* Main Content Area */}
       <div className="flex-grow flex flex-col items-center justify-center relative">
