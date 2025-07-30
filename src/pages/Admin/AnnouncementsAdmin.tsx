@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { showSuccess, showError } from "@/utils/toast";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { CalendarIcon, Edit, Trash2, PlusCircle, UploadCloud, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { v4 as uuidv4 } from 'uuid';
 import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client"; // Import SUPABASE_PUBLISHABLE_KEY
+import { useQueryClient } from "@tanstack/react-query";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup components
 
 interface Announcement {
   id: string;
@@ -35,7 +37,15 @@ const AnnouncementsAdmin = () => {
   const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [saving, setSaving] = useState(false); // State for saving/deleting operations
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  // State for bulk delete
+  const [isConfirmBulkDeleteOpen, setIsConfirmBulkDeleteOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<"byDate" | "byDays">("byDate");
+  const [deleteDate, setDeleteDate] = useState<Date | undefined>(undefined);
+  const [deleteDays, setDeleteDays] = useState<number>(0);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -145,89 +155,87 @@ const AnnouncementsAdmin = () => {
       return;
     }
 
+    setSaving(true);
     let imageUrlToSave = currentAnnouncement.image_url;
-    if (selectedFile) {
-      const uploadedUrl = await uploadImage();
-      if (uploadedUrl === null) {
-        // If upload failed, stop the save process
-        return;
+
+    try {
+      if (selectedFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl === null) {
+          setSaving(false); // Stop saving if image upload failed
+          return;
+        }
+        imageUrlToSave = uploadedUrl;
       }
-      imageUrlToSave = uploadedUrl;
-    }
 
-    let savedAnnouncement: Announcement | null = null;
+      let savedAnnouncement: Announcement | null = null;
 
-    if (currentAnnouncement.id) {
-      // Update existing announcement
-      const { data, error } = await supabase
-        .from("announcements")
-        .update({
+      if (currentAnnouncement.id) {
+        // Update existing announcement
+        const { data, error } = await supabase
+          .from("announcements")
+          .update({
+            title: currentAnnouncement.title,
+            description: currentAnnouncement.description,
+            announcement_date: currentAnnouncement.announcement_date,
+            image_url: imageUrlToSave,
+            is_active: currentAnnouncement.is_active,
+          })
+          .eq("id", currentAnnouncement.id)
+          .select() // Select the updated row to get full data
+          .single();
+
+        if (error) throw error;
+        showSuccess("Announcement updated successfully!");
+        savedAnnouncement = data;
+      } else {
+        // Add new announcement
+        const { data, error } = await supabase.from("announcements").insert({
           title: currentAnnouncement.title,
           description: currentAnnouncement.description,
           announcement_date: currentAnnouncement.announcement_date,
           image_url: imageUrlToSave,
           is_active: currentAnnouncement.is_active,
-        })
-        .eq("id", currentAnnouncement.id)
-        .select() // Select the updated row to get full data
-        .single();
+          // posted_at is handled by database default NOW()
+        }).select().single(); // Select the inserted row to get full data
 
-      if (error) {
-        showError("Error updating announcement: " + error.message);
-      } else {
-        showSuccess("Announcement updated successfully!");
-        savedAnnouncement = data;
-      }
-    } else {
-      // Add new announcement
-      const { data, error } = await supabase.from("announcements").insert({
-        title: currentAnnouncement.title,
-        description: currentAnnouncement.description,
-        announcement_date: currentAnnouncement.announcement_date,
-        image_url: imageUrlToSave,
-        is_active: currentAnnouncement.is_active,
-        // posted_at is handled by database default NOW()
-      }).select().single(); // Select the inserted row to get full data
-
-      if (error) {
-        showError("Error adding announcement: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Announcement added successfully!");
         savedAnnouncement = data;
       }
-    }
 
-    if (savedAnnouncement) {
       setIsDialogOpen(false);
       fetchAnnouncements();
+      queryClient.invalidateQueries({ queryKey: ["activeAnnouncements"] }); // Invalidate public query
       // Send email notification if the announcement is active
-      if (savedAnnouncement.is_active) {
+      if (savedAnnouncement?.is_active) {
         sendAnnouncementEmail(savedAnnouncement);
       }
+    } catch (error: any) {
+      showError("Error saving announcement: " + error.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const confirmDelete = async () => {
     if (announcementToDelete) {
-      const { data: announcementData, error: fetchError } = await supabase
-        .from("announcements")
-        .select("image_url")
-        .eq("id", announcementToDelete)
-        .single();
+      setSaving(true);
+      try {
+        const { data: announcementData, error: fetchError } = await supabase
+          .from("announcements")
+          .select("image_url")
+          .eq("id", announcementToDelete)
+          .single();
 
-      if (fetchError) {
-        showError("Error fetching announcement for image deletion: " + fetchError.message);
-        return;
-      }
+        if (fetchError) throw fetchError;
 
-      const { error } = await supabase
-        .from("announcements")
-        .delete()
-        .eq("id", announcementToDelete);
+        const { error } = await supabase
+          .from("announcements")
+          .delete()
+          .eq("id", announcementToDelete);
 
-      if (error) {
-        showError("Error deleting announcement: " + error.message);
-      } else {
+        if (error) throw error;
         showSuccess("Announcement deleted successfully!");
         // Optionally delete image from storage if it exists
         if (announcementData?.image_url) {
@@ -241,10 +249,49 @@ const AnnouncementsAdmin = () => {
             }
           }
         }
+      } catch (error: any) {
+        showError("Error deleting announcement: " + error.message);
+      } finally {
+        setIsConfirmDeleteOpen(false);
+        setAnnouncementToDelete(null);
+        setSaving(false);
         fetchAnnouncements();
+        queryClient.invalidateQueries({ queryKey: ["activeAnnouncements"] }); // Invalidate public query
       }
-      setIsConfirmDeleteOpen(false);
-      setAnnouncementToDelete(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setSaving(true);
+    try {
+      let query = supabase.from("announcements").delete();
+
+      if (deleteType === "byDate" && deleteDate) {
+        // Delete announcements with event date on or before the selected date
+        query = query.lte("announcement_date", format(deleteDate, "yyyy-MM-dd"));
+        showSuccess(`Deleting announcements with event date on or before ${format(deleteDate, "PPP")}...`);
+      } else if (deleteType === "byDays" && deleteDays > 0) {
+        // Delete announcements posted more than X days ago
+        const dateXDaysAgo = subDays(new Date(), deleteDays);
+        query = query.lt("posted_at", dateXDaysAgo.toISOString());
+        showSuccess(`Deleting announcements posted more than ${deleteDays} days ago...`);
+      } else {
+        showError("Please select valid criteria for bulk deletion.");
+        setSaving(false);
+        return;
+      }
+
+      const { error } = await query;
+
+      if (error) throw error;
+      showSuccess("Bulk deletion completed successfully!");
+    } catch (error: any) {
+      showError("Error during bulk deletion: " + error.message);
+    } finally {
+      setIsConfirmBulkDeleteOpen(false);
+      setSaving(false);
+      fetchAnnouncements(); // Re-fetch to update the list
+      queryClient.invalidateQueries({ queryKey: ["activeAnnouncements"] }); // Invalidate public query
     }
   };
 
@@ -296,6 +343,96 @@ const AnnouncementsAdmin = () => {
           ))}
         </div>
       )}
+
+      {/* Bulk Delete Section */}
+      <section className="mt-12 mb-12">
+        <h2 className="text-2xl font-bold mb-4">Bulk Delete Announcements</h2>
+        <Card className="max-w-md mx-auto p-6">
+          <CardHeader>
+            <CardTitle className="text-xl">Delete Multiple Announcements</CardTitle>
+            <CardDescription>
+              Permanently delete announcements based on their event date or age.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <RadioGroup
+              value={deleteType}
+              onValueChange={(value: "byDate" | "byDays") => {
+                setDeleteType(value);
+                setDeleteDate(undefined); // Clear date when switching type
+                setDeleteDays(0); // Clear days when switching type
+              }}
+              className="flex flex-col space-y-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="byDate" id="delete-by-date" />
+                <Label htmlFor="delete-by-date">Delete by Specific Event Date</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="byDays" id="delete-by-days" />
+                <Label htmlFor="delete-by-days">Delete Older than X Days (posted date)</Label>
+              </div>
+            </RadioGroup>
+
+            {deleteType === "byDate" && (
+              <div className="grid gap-2">
+                <Label htmlFor="delete-date">Event Date On or Before</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !deleteDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {deleteDate ? format(deleteDate, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={deleteDate}
+                      onSelect={setDeleteDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-sm text-muted-foreground">
+                  All announcements with an event date on or before this date will be deleted.
+                </p>
+              </div>
+            )}
+
+            {deleteType === "byDays" && (
+              <div className="grid gap-2">
+                <Label htmlFor="delete-days">Days Ago</Label>
+                <Input
+                  id="delete-days"
+                  type="number"
+                  min="1"
+                  value={deleteDays === 0 ? "" : deleteDays} // Display empty if 0
+                  onChange={(e) => setDeleteDays(parseInt(e.target.value) || 0)}
+                  placeholder="e.g., 30 for 30 days ago"
+                />
+                <p className="text-sm text-muted-foreground">
+                  All announcements posted more than this many days ago will be deleted.
+                </p>
+              </div>
+            )}
+
+            <Button
+              variant="destructive"
+              onClick={() => setIsConfirmBulkDeleteOpen(true)}
+              className="w-full"
+              disabled={saving || (deleteType === "byDate" && !deleteDate) || (deleteType === "byDays" && deleteDays <= 0)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Bulk Delete
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Add/Edit Announcement Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -405,8 +542,8 @@ const AnnouncementsAdmin = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveAnnouncement} disabled={uploadingImage}>
-              {uploadingImage ? (
+            <Button onClick={handleSaveAnnouncement} disabled={saving || uploadingImage}>
+              {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
                 </>
@@ -418,7 +555,7 @@ const AnnouncementsAdmin = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Delete Dialog */}
+      {/* Confirm Single Delete Dialog */}
       <Dialog open={isConfirmDeleteOpen} onOpenChange={setIsConfirmDeleteOpen}>
         <DialogContent>
           <DialogHeader>
@@ -429,7 +566,40 @@ const AnnouncementsAdmin = () => {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfirmDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Bulk Delete Dialog */}
+      <Dialog open={isConfirmBulkDeleteOpen} onOpenChange={setIsConfirmBulkDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Bulk Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete announcements based on the selected criteria?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmBulkDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirm Deleting...
+                </>
+              ) : (
+                "Confirm Delete"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
