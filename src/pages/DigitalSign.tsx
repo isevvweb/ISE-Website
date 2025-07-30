@@ -287,6 +287,13 @@ const DigitalSign = () => {
     setCurrentViewIndex(0);
   }, [views.length]);
 
+  // Callback for when Adhan audio ends
+  const handleAudioEnded = useCallback(() => {
+    // When Adhan audio finishes, dismiss the reminder
+    setShowAdhanReminder(false);
+    setReminderPrayerName(null);
+    setReminderText("");
+  }, []);
 
   // Effect to initialize audio and handle 'ended' event
   useEffect(() => {
@@ -295,24 +302,14 @@ const DigitalSign = () => {
       adhanAudioRef.current.volume = 0.8; // Set a default volume
     }
 
-    const handleAudioEnded = () => {
-      // Only close the reminder if it was for the exact Adhan playback
-      if (reminderText === "Adhan is now!") {
-        setShowAdhanReminder(false);
-        setReminderPrayerName(null);
-        setReminderText("");
-      }
-    };
-
-    // Add event listener only once
+    // Add event listener only once, using the stable callback
     adhanAudioRef.current.addEventListener('ended', handleAudioEnded);
 
     return () => {
       // Clean up event listener
       adhanAudioRef.current?.removeEventListener('ended', handleAudioEnded);
-      // No need to pause/nullify here, as the ref persists.
     };
-  }, [reminderText]); // Dependency on reminderText to ensure the `handleAudioEnded` closure is up-to-date with `reminderText` state.
+  }, [handleAudioEnded]); // Now depends on the stable handleAudioEnded
 
   // Main effect for countdowns and reminders
   useEffect(() => {
@@ -327,12 +324,9 @@ const DigitalSign = () => {
         setReminderText("in 1 Hour!");
         setLastReminded1HourPrayerName(oneHourBeforeAdhanInfo.name);
         setTimeout(() => {
-          // Only close if the current reminder is still the "in 1 Hour!" one
-          if (reminderText === "in 1 Hour!") {
-            setShowAdhanReminder(false);
-            setReminderPrayerName(null);
-            setReminderText("");
-          }
+          setShowAdhanReminder(false);
+          setReminderPrayerName(null);
+          setReminderText("");
         }, 30000); // Dismiss after 30 seconds
         return;
       } else if (diffInSeconds < -60 && oneHourBeforeAdhanInfo.name === lastReminded1HourPrayerName) {
@@ -349,12 +343,9 @@ const DigitalSign = () => {
         setReminderText("in 10 Minutes!");
         setLastReminded10MinPrayerName(nextAdhanInfo.name);
         setTimeout(() => {
-          // Only close if the current reminder is still the "in 10 Minutes!" one
-          if (reminderText === "in 10 Minutes!") {
-            setShowAdhanReminder(false);
-            setReminderPrayerName(null);
-            setReminderText("");
-          }
+          setShowAdhanReminder(false);
+          setReminderPrayerName(null);
+          setReminderText("");
         }, 30000); // Dismiss after 30 seconds
         return;
       } else if (diffInSeconds <= 0 && nextAdhanInfo.name === lastReminded10MinPrayerName) {
@@ -377,19 +368,18 @@ const DigitalSign = () => {
           setLastPlayedExactAdhanPrayer(nextAdhanInfo.name);
 
           // Set a timeout to dismiss the "Adhan is now!" reminder after 4 minutes and 31 seconds (271,000 ms)
+          // This timeout acts as a fallback in case the 'ended' event doesn't fire for some reason.
           setTimeout(() => {
-            if (reminderText === "Adhan is now!") { // Ensure we're dismissing the correct reminder
-              setShowAdhanReminder(false);
-              setReminderPrayerName(null);
-              setReminderText("");
-            }
-          }, 271000); // Dismiss after 4 minutes and 31 seconds
+            setShowAdhanReminder(false);
+            setReminderPrayerName(null);
+            setReminderText("");
+          }, 271000);
         }
       } else if (diffInSeconds < -5 && nextAdhanInfo.name === lastPlayedExactAdhanPrayer) {
         setLastPlayedExactAdhanPrayer(null);
       }
     }
-  }, [nextAdhanInfo, oneHourBeforeAdhanInfo, lastReminded10MinPrayerName, lastReminded1HourPrayerName, lastPlayedExactAdhanPrayer, reminderText]); // Add reminderText to dependencies for the setTimeout check
+  }, [nextAdhanInfo, oneHourBeforeAdhanInfo, lastReminded10MinPrayerName, lastReminded1HourPrayerName, lastPlayedExactAdhanPrayer]); // Removed reminderText from dependencies
 
   // Effect for automatic view rotation
   useEffect(() => {
