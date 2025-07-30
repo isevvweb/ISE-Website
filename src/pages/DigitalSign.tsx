@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO, parse, addDays, differenceInSeconds, isWithinInterval, setHours, setMinutes, getDay, subMinutes, addMinutes } from "date-fns";
+import { format, parseISO, parse, addDays, differenceInSeconds, isWithinInterval, setHours, setMinutes, getDay, subMinutes, addMinutes, isAfter } from "date-fns";
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
@@ -333,20 +333,31 @@ const DigitalSign = () => {
         const iqamahTimeStr = currentPrayerData.iqamahTimes[downtime.prayer_name];
         if (iqamahTimeStr && iqamahTimeStr !== "N/A") {
           const [iqamahHour, iqamahMinute] = iqamahTimeStr.split(':').map(Number);
-          let iqamahDate = setMinutes(setHours(now, iqamahHour), iqamahMinute);
 
-          // Adjust Iqamah date if it's for tomorrow (e.g., Isha passed today, but downtime is for tomorrow's Isha)
-          // This is a simplified check; a more robust solution might involve checking next prayer logic.
-          // For now, assume Iqamah times are for the current day unless they've already passed.
-          if (iqamahDate.getTime() < now.getTime() - (5 * 60 * 1000)) { // If Iqamah was more than 5 mins ago, assume it's for tomorrow
-             iqamahDate = addDays(iqamahDate, 1);
+          // Calculate Iqamah time for today
+          let todayIqamahDate = setMinutes(setHours(now, iqamahHour), iqamahMinute);
+          todayIqamahDate = toZonedTime(todayIqamahDate, TIMEZONE); // Ensure it's in the correct timezone
+
+          const todayStartTime = subMinutes(todayIqamahDate, downtime.minutes_before_iqamah || 0);
+          const todayEndTime = addMinutes(todayIqamahDate, downtime.minutes_after_iqamah || 0);
+
+          // Check if 'now' is within today's downtime interval
+          if (isWithinInterval(now, { start: todayStartTime, end: todayEndTime })) {
+            return true;
           }
 
-          const startTime = subMinutes(iqamahDate, downtime.minutes_before_iqamah || 0);
-          const endTime = addMinutes(iqamahDate, downtime.minutes_after_iqamah || 0);
+          // If not within today's interval, check if it's for tomorrow's prayer
+          // This handles cases where the current time is after today's prayer,
+          // but before tomorrow's prayer's downtime window.
+          // We only need to consider tomorrow if today's interval has passed.
+          if (isAfter(now, todayEndTime)) {
+            const tomorrowIqamahDate = addDays(todayIqamahDate, 1);
+            const tomorrowStartTime = subMinutes(tomorrowIqamahDate, downtime.minutes_before_iqamah || 0);
+            const tomorrowEndTime = addMinutes(tomorrowIqamahDate, downtime.minutes_after_iqamah || 0);
 
-          if (isWithinInterval(now, { start: startTime, end: endTime })) {
-            return true;
+            if (isWithinInterval(now, { start: tomorrowStartTime, end: tomorrowEndTime })) {
+              return true;
+            }
           }
         }
       }
