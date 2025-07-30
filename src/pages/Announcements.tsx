@@ -14,10 +14,11 @@ interface Announcement {
   id: string;
   title: string;
   description: string;
-  announcement_date: string;
+  announcement_date: string; // ISO date string
   image_url?: string;
   is_active: boolean;
   posted_at?: string;
+  expiration_date?: string; // New: ISO date string for expiration
 }
 
 const Announcements = () => {
@@ -32,10 +33,13 @@ const Announcements = () => {
 
   const fetchActiveAnnouncements = async () => {
     setLoadingAnnouncements(true);
+    const today = format(new Date(), "yyyy-MM-dd"); // Get today's date in YYYY-MM-DD format
+
     const { data, error } = await supabase
       .from("announcements")
       .select("*")
       .eq("is_active", true)
+      .or(`expiration_date.is.null,expiration_date.gte.${today}`) // Filter: no expiration OR expiration date is today or in the future
       .order("posted_at", { ascending: false });
 
     if (error) {

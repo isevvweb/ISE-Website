@@ -26,6 +26,7 @@ interface Announcement {
   image_url?: string;
   is_active: boolean;
   posted_at?: string; // New column for precise sorting
+  expiration_date?: string; // New: ISO date string for expiration
 }
 
 const AnnouncementsAdmin = () => {
@@ -73,6 +74,7 @@ const AnnouncementsAdmin = () => {
       announcement_date: format(new Date(), "yyyy-MM-dd"), // Default to today
       image_url: "",
       is_active: true,
+      expiration_date: undefined, // Default no expiration
     });
     setSelectedFile(null);
     setIsDialogOpen(true);
@@ -170,17 +172,20 @@ const AnnouncementsAdmin = () => {
 
       let savedAnnouncement: Announcement | null = null;
 
+      const payload = {
+        title: currentAnnouncement.title,
+        description: currentAnnouncement.description,
+        announcement_date: currentAnnouncement.announcement_date,
+        image_url: imageUrlToSave,
+        is_active: currentAnnouncement.is_active,
+        expiration_date: currentAnnouncement.expiration_date || null, // Save expiration_date, use null if undefined
+      };
+
       if (currentAnnouncement.id) {
         // Update existing announcement
         const { data, error } = await supabase
           .from("announcements")
-          .update({
-            title: currentAnnouncement.title,
-            description: currentAnnouncement.description,
-            announcement_date: currentAnnouncement.announcement_date,
-            image_url: imageUrlToSave,
-            is_active: currentAnnouncement.is_active,
-          })
+          .update(payload)
           .eq("id", currentAnnouncement.id)
           .select() // Select the updated row to get full data
           .single();
@@ -191,11 +196,7 @@ const AnnouncementsAdmin = () => {
       } else {
         // Add new announcement
         const { data, error } = await supabase.from("announcements").insert({
-          title: currentAnnouncement.title,
-          description: currentAnnouncement.description,
-          announcement_date: currentAnnouncement.announcement_date,
-          image_url: imageUrlToSave,
-          is_active: currentAnnouncement.is_active,
+          ...payload,
           // posted_at is handled by database default NOW()
         }).select().single(); // Select the inserted row to get full data
 
@@ -324,8 +325,13 @@ const AnnouncementsAdmin = () => {
               <CardHeader>
                 <CardTitle className="text-xl">{announcement.title}</CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  {format(parseISO(announcement.announcement_date), "PPP")}
+                  Event Date: {format(parseISO(announcement.announcement_date), "PPP")}
                 </CardDescription>
+                {announcement.expiration_date && (
+                  <CardDescription className="text-sm text-muted-foreground">
+                    Expires: {format(parseISO(announcement.expiration_date), "PPP")}
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 dark:text-gray-300 mb-4">{announcement.description}</p>
@@ -468,7 +474,7 @@ const AnnouncementsAdmin = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="announcement_date" className="text-right">
-                Date
+                Event Date
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -493,6 +499,40 @@ const AnnouncementsAdmin = () => {
                       setCurrentAnnouncement({
                         ...currentAnnouncement,
                         announcement_date: date ? format(date, "yyyy-MM-dd") : "",
+                      })
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="expiration_date" className="text-right">
+                Expiration Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal col-span-3",
+                      !currentAnnouncement?.expiration_date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {currentAnnouncement?.expiration_date
+                      ? format(parseISO(currentAnnouncement.expiration_date), "PPP")
+                      : "No expiration (optional)"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={currentAnnouncement?.expiration_date ? parseISO(currentAnnouncement.expiration_date) : undefined}
+                    onSelect={(date) =>
+                      setCurrentAnnouncement({
+                        ...currentAnnouncement,
+                        expiration_date: date ? format(date, "yyyy-MM-dd") : undefined, // Set to undefined if cleared
                       })
                     }
                     initialFocus

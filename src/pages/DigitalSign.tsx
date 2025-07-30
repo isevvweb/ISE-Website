@@ -68,6 +68,7 @@ interface Announcement {
   image_url?: string;
   is_active: boolean;
   posted_at?: string;
+  expiration_date?: string; // New: ISO date string for expiration
 }
 
 interface DigitalSignSettings {
@@ -154,11 +155,13 @@ const fetchDigitalSignSettings = async (): Promise<DigitalSignSettings> => {
 
 const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> => {
   if (limit <= 0) return []; // If limit is 0 or less, return empty array
+  const today = format(new Date(), "yyyy-MM-dd"); // Get today's date in YYYY-MM-DD format
 
   const { data, error } = await supabase
     .from("announcements")
     .select("*")
     .eq("is_active", true)
+    .or(`expiration_date.is.null,expiration_date.gte.${today}`) // Filter: no expiration OR expiration date is today or in the future
     .order("posted_at", { ascending: false })
     .limit(limit);
 
