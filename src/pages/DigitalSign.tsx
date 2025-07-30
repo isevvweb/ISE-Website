@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO, parse, addDays, differenceInSeconds } from "date-fns";
+import { format, parseISO, parse, addDays, differenceInSeconds, isWithinInterval, setHours, setMinutes, getDay, subMinutes, addMinutes } from "date-fns";
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { supabase } from "@/integrations/supabase/client";
 import { showError } from "@/utils/toast";
@@ -77,6 +77,18 @@ interface DigitalSignSettings {
   show_descriptions: boolean;
   show_images: boolean;
   rotation_interval_seconds: number; // New field
+}
+
+interface DowntimeEntry {
+  id: string;
+  type: 'time_range' | 'prayer_iqamah';
+  start_time?: string; // HH:mm or prayer name
+  end_time?: string;   // HH:mm or prayer name
+  prayer_name?: string; // e.g., 'Fajr', 'Dhuhr'
+  minutes_before_iqamah?: number;
+  minutes_after_iqamah?: number;
+  days_of_week: string[]; // Array of day names, e.g., ['Monday', 'Friday']
+  is_active: boolean;
 }
 
 interface CalendarEvent {
@@ -171,6 +183,18 @@ const fetchActiveAnnouncements = async (limit: number): Promise<Announcement[]> 
   return data || [];
 };
 
+const fetchDigitalSignDowntimes = async (): Promise<DowntimeEntry[]> => {
+  const { data, error } = await supabase
+    .from("digital_sign_downtimes")
+    .select("*")
+    .eq("is_active", true);
+
+  if (error) {
+    throw new Error("Error fetching digital sign downtimes: " + error.message);
+  }
+  return data || [];
+};
+
 const fetchUpcomingEvents = async (): Promise<CalendarEvent[]> => {
   const { data, error } = await supabase.functions.invoke('fetch-calendar-events', {
     body: { calendarIds: [YOUTH_CALENDAR_ID, COMMUNITY_CALENDAR_ID] },
@@ -248,6 +272,14 @@ const DigitalSign = () => {
     refetchOnWindowFocus: false,
   });
 
+  const { data: downtimes, isLoading: isLoadingDowntimes, error: downtimesError } = useQuery<DowntimeEntry[], Error>({
+    queryKey: ["digitalSignDowntimes"],
+    queryFn: fetchDigitalSignDowntimes,
+    staleTime: 1000 * 60 * 5, // Downtimes considered fresh for 5 minutes
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
   // Use the new hook for next prayer countdown
   const { nextAdhanInfo, oneHourBeforeAdhanInfo } = useNextPrayerCountdown(prayerData?.apiTimes.data);
 
@@ -264,8 +296,72 @@ const DigitalSign = () => {
 
   const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
 
+  // Helper to check if current time is within a downtime period
+  const isDuringDowntime = useCallback((
+    currentDowntimes: DowntimeEntry[] | undefined,
+    currentPrayerData: { apiTimes: PrayerTimesData; iqamahTimes: Record<string, string> } | undefined
+  ): boolean => {
+    if (!currentDowntimes || currentDowntimes.length === 0) return false;
+
+    const now = toZonedTime(new Date(), TIMEZONE);
+    const currentDayName = format(now, 'EEEE'); // e.g., "Monday"
+
+    for (const downtime of currentDowntimes) {
+      if (!downtime.is_active) continue;
+
+      // Check if the current day is included in the downtime's days_of_week
+      if (!downtime.days_of_week.includes(currentDayName)) {
+        continue;
+      }
+
+      if (downtime.type === 'time_range' && downtime.start_time && downtime.end_time) {
+        const [startHour, startMinute] = downtime.start_time.split(':').map(Number);
+        const [endHour, endMinute] = downtime.end_time.split(':').map(Number);
+
+        let startTime = setMinutes(setHours(now, startHour), startMinute);
+        let endTime = setMinutes(setHours(now, endHour), endMinute);
+
+        // Handle overnight ranges (e.g., 23:00 - 02:00)
+        if (endTime.getTime() < startTime.getTime()) {
+          endTime = addDays(endTime, 1);
+        }
+
+        if (isWithinInterval(now, { start: startTime, end: endTime })) {
+          return true;
+        }
+      } else if (downtime.type === 'prayer_iqamah' && downtime.prayer_name && currentPrayerData) {
+        const iqamahTimeStr = currentPrayerData.iqamahTimes[downtime.prayer_name];
+        if (iqamahTimeStr && iqamahTimeStr !== "N/A") {
+          const [iqamahHour, iqamahMinute] = iqamahTimeStr.split(':').map(Number);
+          let iqamahDate = setMinutes(setHours(now, iqamahHour), iqamahMinute);
+
+          // Adjust Iqamah date if it's for tomorrow (e.g., Isha passed today, but downtime is for tomorrow's Isha)
+          // This is a simplified check; a more robust solution might involve checking next prayer logic.
+          // For now, assume Iqamah times are for the current day unless they've already passed.
+          if (iqamahDate.getTime() < now.getTime() - (5 * 60 * 1000)) { // If Iqamah was more than 5 mins ago, assume it's for tomorrow
+             iqamahDate = addDays(iqamahDate, 1);
+          }
+
+          const startTime = subMinutes(iqamahDate, downtime.minutes_before_iqamah || 0);
+          const endTime = addMinutes(iqamahDate, downtime.minutes_after_iqamah || 0);
+
+          if (isWithinInterval(now, { start: startTime, end: endTime })) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }, []);
+
+  const duringDowntime = isDuringDowntime(downtimes, prayerData);
+
   // Dynamically define the views to rotate through
   const views: DigitalSignViewItem[] = React.useMemo(() => {
+    if (duringDowntime) {
+      return [{ id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView' as const, show: true }];
+    }
+
     const baseViews: BaseViewItem[] = [
       { id: 'prayerTimes', title: 'Prayer Times', component: 'PrayerTimesView' as const, show: true },
       { id: 'upcomingEvents', title: 'Upcoming Events', component: 'UpcomingEventsView' as const, show: upcomingEvents && upcomingEvents.length > 0 },
@@ -283,7 +379,7 @@ const DigitalSign = () => {
       : [];
 
     return [...baseViews, ...announcementViews];
-  }, [settings, announcements, upcomingEvents]);
+  }, [settings, announcements, upcomingEvents, duringDowntime]);
 
   // Effect to reset currentViewIndex if the number of views changes
   useEffect(() => {
@@ -407,6 +503,9 @@ const DigitalSign = () => {
   }
   if (settingsError) {
     showError("Error loading digital sign settings: " + settingsError.message);
+  }
+  if (downtimesError) {
+    showError("Error loading digital sign downtimes: " + downtimesError.message);
   }
 
   const currentView = views[currentViewIndex];
