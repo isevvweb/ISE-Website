@@ -45,62 +45,58 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex flex-col md:flex-row min-h-[7rem] md:h-14 items-center justify-between py-2">
-        <Link to="/" className="mr-4 flex items-center flex-shrink-0 mb-2 md:mb-0">
+      <div className="container flex items-center justify-between h-16 py-2"> {/* Adjusted height and removed flex-col */}
+        <Link to="/" className="mr-4 flex items-center flex-shrink-0">
           <span className="font-bold text-lg whitespace-nowrap">
             Islamic Society<br className="md:hidden" /> of Evansville
           </span>
         </Link>
 
-        <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-            {/* Search Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Search"
-              onClick={() => setIsSearchDialogOpen(true)}
-            >
-              <Search className="h-5 w-5" />
-            </Button>
+        <div className="flex items-center gap-2"> {/* Consolidated all icons into one flex container */}
+          {/* Search Icon */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Search"
+            onClick={() => setIsSearchDialogOpen(true)}
+          >
+            <Search className="h-5 w-5" />
+          </Button>
 
-            {/* Theme Toggle */}
-            <ThemeToggle />
-          </div>
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-            {/* Info Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Creator Info"
-              onClick={() => setIsCreatorInfoOpen(true)}
-            >
-              <Info className="h-5 w-5" />
-            </Button>
+          {/* Info Icon */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Creator Info"
+            onClick={() => setIsCreatorInfoOpen(true)}
+          >
+            <Info className="h-5 w-5" />
+          </Button>
 
-            {/* Navigation Sheet Trigger (always visible) */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Toggle navigation">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <nav className="flex flex-col gap-4 pt-6">
-                  {publicRoutes.map((route) => (
-                    <Link
-                      key={route.path}
-                      to={route.path}
-                      className="text-lg font-medium hover:text-primary"
-                    >
-                      {route.name}
-                    </Link>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {/* Navigation Sheet Trigger (always visible) */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Toggle navigation">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <nav className="flex flex-col gap-4 pt-6">
+                {publicRoutes.map((route) => (
+                  <Link
+                    key={route.path}
+                    to={route.path}
+                    className="text-lg font-medium hover:text-primary"
+                  >
+                    {route.name}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
       <CreatorInfoDialog isOpen={isCreatorInfoOpen} onOpenChange={setIsCreatorInfoOpen} />
