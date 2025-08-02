@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { Analytics } from "@vercel/analytics/react"; // Import Vercel Analytics
 
 import Header from "./components/Header";
 import Index from "./pages/Index";
@@ -34,7 +35,7 @@ import LeadershipAdmin from "@/pages/Admin/LeadershipAdmin.tsx";
 import DonationCausesAdmin from "@/pages/Admin/DonationCausesAdmin.tsx";
 import YouthEventsAdmin from "@/pages/Admin/YouthEventsAdmin.tsx";
 import YouthSubprogramsAdmin from "@/pages/Admin/YouthSubprogramsAdmin.tsx";
-import DigitalSignSettingsAdmin from "@/pages/Admin/DigitalSignSettingsAdmin.tsx"; // Import new admin page
+import DigitalSignSettingsAdmin from "@/pages/Admin/DigitalSignSettingsAdmin.tsx";
 import Search from "./pages/Search";
 import DigitalSign from "./pages/DigitalSign";
 
@@ -46,6 +47,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <Analytics /> {/* Vercel Analytics component added here */}
         <Routes>
           {/* Public Routes with Header */}
           <Route element={<div className="flex flex-col min-h-screen"><Header /><main className="flex-grow"><Outlet /></main></div>}>
@@ -80,7 +82,7 @@ const App = () => (
             <Route path="trustees" element={<BoardOfTrusteesAdmin />} />
             <Route path="youth-events" element={<YouthEventsAdmin />} />
             <Route path="youth-subprograms" element={<YouthSubprogramsAdmin />} />
-            <Route path="digital-sign-settings" element={<DigitalSignSettingsAdmin />} /> {/* New route */}
+            <Route path="digital-sign-settings" element={<DigitalSignSettingsAdmin />} />
           </Route>
 
           {/* Digital Sign Route (no header/footer) */}
