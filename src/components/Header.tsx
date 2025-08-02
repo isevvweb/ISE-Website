@@ -45,17 +45,15 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
-        <Link to="/" className="mr-4 flex items-center flex-shrink-0">
+      <div className="container flex flex-col md:flex-row min-h-[7rem] md:h-14 items-center justify-between py-2">
+        <Link to="/" className="mr-4 flex items-center flex-shrink-0 mb-2 md:mb-0">
           <span className="font-bold text-lg whitespace-nowrap">
             Islamic Society<br className="md:hidden" /> of Evansville
           </span>
         </Link>
 
-        {/* Changed to flex-col on mobile, flex-row on desktop */}
-        <div className="flex flex-col md:flex-row items-center gap-2">
-          {/* Top row on mobile, left on desktop */}
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             {/* Search Icon */}
             <Button
               variant="ghost"
@@ -70,8 +68,7 @@ const Header = () => {
             <ThemeToggle />
           </div>
 
-          {/* Bottom row on mobile, right on desktop */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             {/* Info Icon */}
             <Button
               variant="ghost"
