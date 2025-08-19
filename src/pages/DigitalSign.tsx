@@ -294,7 +294,7 @@ const DigitalSign = () => {
   }, [upcomingEvents, eventsError]);
 
 
-  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"];
+  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
   // Helper to check if current time is within a downtime period
   const isDuringDowntime = useCallback((
@@ -449,14 +449,14 @@ const DigitalSign = () => {
       if (diffInSeconds <= 600 && diffInSeconds > 0 && nextAdhanInfo.name !== lastReminded10MinPrayerName) {
         setShowAdhanReminder(true);
         setReminderPrayerName(nextAdhanInfo.name);
-        setReminderText("in 10 Minutes!");
+        setReminderText("coming soon."); // Changed text here
         setLastReminded10MinPrayerName(nextAdhanInfo.name); // Mark as reminded
         setTimeout(() => {
           setShowAdhanReminder(false);
           setReminderPrayerName(null);
           setReminderText("");
           setLastReminded10MinPrayerName(null); // Crucially, clear the flag here
-        }, 30000); // Dismiss after 30 seconds
+        }, 600000); // Dismiss after 10 minutes (600,000 ms)
         return; // Important: only show one reminder at a time
       }
     }

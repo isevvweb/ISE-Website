@@ -12,16 +12,14 @@ const AdhanReminder: React.FC<AdhanReminderProps> = ({ prayerName, timeRemaining
   // The parent component (DigitalSign) will now manage the dismissal.
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground animate-fade-in">
-      <div className="text-center p-8 md:p-16">
-        <BellRing className="h-48 w-48 mx-auto mb-8 animate-pulse" />
-        <h1 className="text-7xl md:text-8xl font-extrabold mb-4">
-          Adhan for {prayerName}
-        </h1>
-        <p className="text-5xl md:text-6xl font-semibold">
-          {timeRemainingText}
-        </p>
-      </div>
+    <div className="fixed top-0 left-0 right-0 h-[calc(100vh-17rem)] z-[100] flex flex-col items-center justify-center bg-gradient-to-br from-primary to-accent text-primary-foreground animate-fade-in p-8 md:p-16 overflow-hidden">
+      <BellRing className="h-48 w-48 mx-auto mb-8 animate-pulse" />
+      <h1 className="text-6xl md:text-7xl font-extrabold mb-4">
+        Adhan for {prayerName}
+      </h1>
+      <p className="text-4xl md:text-5xl font-semibold">
+        {timeRemainingText}
+      </p>
     </div>
   );
 };
