@@ -294,7 +294,7 @@ const DigitalSign = () => {
   }, [upcomingEvents, eventsError]);
 
 
-  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+  const prayerOrder = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha", "Jumuah"]; // Include Jumuah here
 
   // Helper to check if current time is within a downtime period
   const isDuringDowntime = useCallback((
@@ -639,8 +639,13 @@ const DigitalSign = () => {
         )}
       </div>
 
-      {/* Footer Section with Next Prayer Countdown */}
+      {/* Footer Section with Next Prayer Countdown and Jumu'ah */}
       <div className="text-center mt-12 text-4xl text-gray-400">
+        {prayerData && (
+          <p className="text-5xl font-medium text-gray-300 mb-4">
+            Jumu'ah: <span className="text-accent font-bold">{formatTimeForDisplay(prayerData.iqamahTimes["Jumuah"] || "N/A")}</span>
+          </p>
+        )}
         {nextAdhanInfo && (
           <p className="text-8xl font-bold text-accent mb-6">
             {nextAdhanInfo.name} at {nextAdhanInfo.formattedTime}
